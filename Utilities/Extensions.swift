@@ -1,0 +1,73 @@
+import SwiftUI
+
+// MARK: - View Modifiers
+struct GradientBackgroundModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        AppConstants.Colors.primary,
+                        AppConstants.Colors.secondary
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+}
+
+struct CardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(AppConstants.Colors.cardBackground)
+            .cornerRadius(AppConstants.Design.cornerRadius)
+            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
+    }
+}
+
+extension View {
+    func gradientBackground() -> some View {
+        modifier(GradientBackgroundModifier())
+    }
+    
+    func cardStyle() -> some View {
+        modifier(CardModifier())
+    }
+}
+
+// MARK: - String Extensions
+extension String {
+    var isValidEmail: Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: self)
+    }
+    
+    var isValidPassword: Bool {
+        return self.count >= 6
+    }
+    
+    var isValidName: Bool {
+        return !self.trimmingCharacters(in: .whitespaces).isEmpty && self.count >= 2
+    }
+}
+
+// MARK: - Haptic Feedback
+struct HapticFeedback {
+    static func impact(style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.impactOccurred()
+    }
+    
+    static func success() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+    
+    static func error() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+    }
+}
+

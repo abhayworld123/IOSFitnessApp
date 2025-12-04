@@ -1,0 +1,6 @@
+*.plist
+GoogleService-Info.plist
+*.xcworkspace/*
+*.xcuserstate
+*.xcuserdata/
+.DS_Store
