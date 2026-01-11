@@ -7,6 +7,7 @@ struct ProfileView: View {
     @ObservedObject private var themeManager = ThemeManager.shared
     @State private var showEditProfile = false
     @State private var showManageSubscription = false
+    @State private var showNotifications = false
     @State private var showNotificationSettings = false
     @State private var showPrivacyPolicy = false
     @State private var showTermsOfService = false
@@ -51,6 +52,9 @@ struct ProfileView: View {
             .sheet(isPresented: $showManageSubscription) {
                 // Will be replaced with subscription management view
                 PaywallView()
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationsView()
             }
             .sheet(isPresented: $showNotificationSettings) {
                 NotificationSettingsView()
@@ -227,6 +231,18 @@ struct ProfileView: View {
                     color: .yellow
                 ) {
                     showManageSubscription = true
+                }
+                
+                Divider()
+                    .background(AppConstants.Colors.textSecondary(colorScheme: colorScheme).opacity(0.3))
+                    .padding(.leading, 60)
+                
+                SettingsRow(
+                    icon: "bell.badge.fill",
+                    title: "Notifications",
+                    color: AppConstants.Colors.primary
+                ) {
+                    showNotifications = true
                 }
                 
                 Divider()

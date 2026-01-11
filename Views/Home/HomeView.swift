@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @StateObject private var dashboardViewModel = DashboardViewModel()
     @StateObject private var viewModel = WorkoutViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.colorScheme) var colorScheme
@@ -21,6 +22,9 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
+                        // Dashboard Metrics Section
+                        dashboardSection
+                        
                         // Featured Workouts Carousel
                         if !viewModel.workouts.isEmpty {
                             featuredWorkoutsSection
@@ -44,13 +48,24 @@ struct HomeView: View {
                     .padding(.top, 8)
                 }
                 .refreshable {
+                    await dashboardViewModel.fetchDashboardData()
                     await viewModel.refresh()
                 }
             }
-            .navigationTitle("Workouts")
+            .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 AnalyticsService.shared.trackScreenView("Home", screenClass: "HomeView")
+                if dashboardViewModel.metrics.workoutProgress.weeklyData.isEmpty {
+                    Task {
+                        await dashboardViewModel.fetchDashboardData()
+                    }
+                }
+                if viewModel.workouts.isEmpty {
+                    Task {
+                        await viewModel.fetchWorkouts()
+                    }
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -92,14 +107,41 @@ struct HomeView: View {
                     VideoPlayerView(workout: workout)
                 }
             }
-            .onAppear {
-                if viewModel.workouts.isEmpty {
-                    Task {
-                        await viewModel.fetchWorkouts()
-                    }
-                }
-            }
         }
+    }
+    
+    // MARK: - Dashboard Section
+    private var dashboardSection: some View {
+        VStack(spacing: 16) {
+            // First Row: BMI and Target (2 columns)
+            HStack(spacing: 16) {
+                BMICardView(bmi: dashboardViewModel.metrics.bmi)
+                    .frame(maxWidth: .infinity)
+                
+                TargetCardView(target: dashboardViewModel.metrics.target)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 20)
+            
+            // Second Row: Activity Status (full width)
+            ActivityStatusCardView(activity: dashboardViewModel.metrics.activityStatus)
+                .padding(.horizontal, 20)
+            
+            // Third Row: Water Intake and Calories (2 columns)
+            HStack(spacing: 16) {
+                WaterIntakeCardView(waterIntake: dashboardViewModel.metrics.waterIntake)
+                    .frame(maxWidth: .infinity)
+                
+                CaloriesCardView(calories: dashboardViewModel.metrics.calories)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 20)
+            
+            // Fourth Row: Workout Progress Chart (full width)
+            WorkoutProgressCardView(progress: dashboardViewModel.metrics.workoutProgress)
+                .padding(.horizontal, 20)
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - Featured Workouts Section
