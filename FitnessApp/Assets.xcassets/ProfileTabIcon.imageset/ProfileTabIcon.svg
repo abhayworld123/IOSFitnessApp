@@ -1,0 +1,8 @@
+<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer circle outline -->
+  <circle cx="11" cy="11" r="9.5" stroke="black" stroke-width="1.5" fill="none"/>
+  <!-- Head circle outline -->
+  <circle cx="11" cy="7.5" r="2.8" stroke="black" stroke-width="1.5" fill="none"/>
+  <!-- Shoulders U-shape outline -->
+  <path d="M 5.5 13.2 Q 5.5 17 11 17 Q 16.5 17 16.5 13.2" stroke="black" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

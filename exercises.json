@@ -1,0 +1,2059 @@
+{
+  "exercises": [
+    {
+      "id": "ex_001",
+      "name": "Lat Pulldown",
+      "description": "Target your latissimus dorsi with this effective back exercise using a cable machine.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/lat-pulldown.mp4",
+      "instructions": [
+        "Sit at the lat pulldown machine with knees secured under pads",
+        "Grasp the bar with wide overhand grip",
+        "Pull the bar down to your upper chest",
+        "Squeeze your lats at the bottom",
+        "Slowly return to starting position"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_002",
+      "name": "Seated Rowing",
+      "description": "Build a strong back with this seated rowing exercise targeting the middle trapezius and rhomboids.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/seated-rowing.mp4",
+      "instructions": [
+        "Sit on the rowing machine with feet secured",
+        "Grasp the handle with both hands",
+        "Pull the handle to your lower chest",
+        "Squeeze your shoulder blades together",
+        "Return to starting position with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_003",
+      "name": "Pullover",
+      "description": "Isolate your lats and serratus anterior with this classic pullover exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "back",
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/pullover.mp4",
+      "instructions": [
+        "Lie on a bench with dumbbell held above chest",
+        "Lower the weight behind your head",
+        "Feel the stretch in your lats",
+        "Pull the weight back to starting position",
+        "Keep your core engaged throughout"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_004",
+      "name": "Barbell Rows",
+      "description": "Build thickness in your back with this compound rowing movement.",
+      "sets": 4,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/barbell-rows.mp4",
+      "instructions": [
+        "Stand with feet shoulder-width apart",
+        "Bend at hips, keeping back straight",
+        "Grasp barbell with overhand grip",
+        "Pull barbell to lower chest/upper abdomen",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_005",
+      "name": "Single Arm Dumbbell Row",
+      "description": "Unilateral rowing exercise for balanced back development and core stability.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 45,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/single-arm-row.mp4",
+      "instructions": [
+        "Place one knee and hand on bench",
+        "Hold dumbbell in opposite hand",
+        "Pull dumbbell to your side",
+        "Squeeze your back muscle",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_006",
+      "name": "Bicep Curls",
+      "description": "Isolate and build your biceps with this classic arm exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/bicep-curls.mp4",
+      "instructions": [
+        "Stand with dumbbells at your sides",
+        "Curl weights up to shoulders",
+        "Squeeze biceps at the top",
+        "Lower with control",
+        "Keep elbows stationary"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_007",
+      "name": "Hammer Curls",
+      "description": "Target your brachialis and forearms with this variation of bicep curls.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/hammer-curls.mp4",
+      "instructions": [
+        "Hold dumbbells with neutral grip",
+        "Curl weights up keeping palms facing each other",
+        "Squeeze at the top",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_008",
+      "name": "Cable Bicep Curls",
+      "description": "Constant tension bicep exercise using cable machine for muscle growth.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-bicep-curls.mp4",
+      "instructions": [
+        "Stand facing cable machine",
+        "Grasp cable attachment with underhand grip",
+        "Curl cable up to shoulders",
+        "Feel constant tension throughout",
+        "Lower slowly"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_009",
+      "name": "Preacher Curls",
+      "description": "Isolate your biceps with this supported curling exercise.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/preacher-curls.mp4",
+      "instructions": [
+        "Sit at preacher bench",
+        "Rest arms on pad",
+        "Curl weight up",
+        "Lower slowly for maximum stretch"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_010",
+      "name": "Reverse Grip Barbell Rows",
+      "description": "Target your lower lats and biceps with underhand grip rows.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "back",
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/reverse-grip-rows.mp4",
+      "instructions": [
+        "Use underhand grip on barbell",
+        "Bend at hips with straight back",
+        "Pull to lower chest",
+        "Feel biceps and lower lats working"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_011",
+      "name": "T-Bar Rows",
+      "description": "Heavy rowing exercise for building a thick, powerful back.",
+      "sets": 4,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/t-bar-rows.mp4",
+      "instructions": [
+        "Straddle T-bar row machine",
+        "Grasp handles with both hands",
+        "Pull weight to your chest",
+        "Squeeze back muscles",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_012",
+      "name": "Face Pulls",
+      "description": "Target your rear delts and upper back for better posture.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "back",
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/face-pulls.mp4",
+      "instructions": [
+        "Set cable at face height",
+        "Pull rope to your face",
+        "Separate handles at end",
+        "Squeeze rear delts",
+        "Return slowly"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_013",
+      "name": "Chest Press",
+      "description": "Build a powerful chest with this fundamental pressing movement.",
+      "sets": 4,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/chest-press.mp4",
+      "instructions": [
+        "Lie on bench with feet flat",
+        "Lower barbell to chest",
+        "Press up explosively",
+        "Lock out at top",
+        "Control the descent"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_014",
+      "name": "Incline Dumbbell Press",
+      "description": "Target your upper chest with this incline pressing exercise.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "chest",
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/incline-dumbbell-press.mp4",
+      "instructions": [
+        "Set bench to 30-45 degree incline",
+        "Press dumbbells up and together",
+        "Lower to chest level",
+        "Feel stretch in upper chest"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_015",
+      "name": "Overhead Press",
+      "description": "Build strong shoulders with this standing overhead pressing movement.",
+      "sets": 4,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/overhead-press.mp4",
+      "instructions": [
+        "Stand with feet shoulder-width",
+        "Press barbell overhead",
+        "Keep core tight",
+        "Lower to shoulder level",
+        "Repeat"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_016",
+      "name": "Tricep Dips",
+      "description": "Build powerful triceps with this bodyweight exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/tricep-dips.mp4",
+      "instructions": [
+        "Position hands on bench behind you",
+        "Lower body by bending arms",
+        "Push back up",
+        "Keep elbows close to body"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_017",
+      "name": "Lateral Raises",
+      "description": "Isolate your side delts for wider shoulders.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/lateral-raises.mp4",
+      "instructions": [
+        "Hold dumbbells at your sides",
+        "Raise arms to shoulder height",
+        "Lower with control",
+        "Keep slight bend in elbows"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_018",
+      "name": "Cable Flys",
+      "description": "Isolate your chest with this cable crossover exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-flys.mp4",
+      "instructions": [
+        "Set cables at chest height",
+        "Bring handles together",
+        "Squeeze chest at center",
+        "Return slowly"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_019",
+      "name": "Close Grip Bench Press",
+      "description": "Target your triceps and inner chest with narrow grip pressing.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "arms",
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/close-grip-bench.mp4",
+      "instructions": [
+        "Use narrow grip on barbell",
+        "Lower to lower chest",
+        "Press up focusing on triceps",
+        "Keep elbows close"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_020",
+      "name": "Front Raises",
+      "description": "Target your anterior deltoids with this front raising exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/front-raises.mp4",
+      "instructions": [
+        "Hold dumbbell in front",
+        "Raise to shoulder height",
+        "Lower with control",
+        "Alternate arms or both together"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_021",
+      "name": "Squats",
+      "description": "The king of leg exercises for building powerful quads and glutes.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 120,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/squats.mp4",
+      "instructions": [
+        "Stand with feet shoulder-width",
+        "Lower as if sitting back",
+        "Keep knees behind toes",
+        "Drive through heels to stand"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_022",
+      "name": "Leg Press",
+      "description": "Build massive legs with this machine-based pressing exercise.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 90,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/leg-press.mp4",
+      "instructions": [
+        "Sit in leg press machine",
+        "Place feet on platform",
+        "Lower weight by bending knees",
+        "Press back up explosively"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_023",
+      "name": "Leg Extension",
+      "description": "Isolate your quadriceps with this machine exercise.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/leg-extension.mp4",
+      "instructions": [
+        "Sit in leg extension machine",
+        "Extend legs against resistance",
+        "Squeeze quads at top",
+        "Lower with control"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_024",
+      "name": "Romanian Deadlifts",
+      "description": "Target your hamstrings and glutes with this hip hinge movement.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/romanian-deadlifts.mp4",
+      "instructions": [
+        "Hold barbell with overhand grip",
+        "Hinge at hips, keep back straight",
+        "Lower until you feel hamstring stretch",
+        "Drive hips forward to stand"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_025",
+      "name": "Lunges",
+      "description": "Unilateral leg exercise for balanced development and stability.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/lunges.mp4",
+      "instructions": [
+        "Step forward into lunge",
+        "Lower back knee toward ground",
+        "Push through front heel to return",
+        "Alternate legs"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_026",
+      "name": "Leg Curls",
+      "description": "Isolate your hamstrings with this machine exercise.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/leg-curls.mp4",
+      "instructions": [
+        "Lie face down on leg curl machine",
+        "Curl heels toward glutes",
+        "Squeeze hamstrings",
+        "Lower with control"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_027",
+      "name": "Calf Raises",
+      "description": "Build strong, defined calves with this isolation exercise.",
+      "sets": 4,
+      "reps": 20,
+      "restTime": 45,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/calf-raises.mp4",
+      "instructions": [
+        "Stand on platform or floor",
+        "Raise up on toes",
+        "Squeeze calves at top",
+        "Lower slowly"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_028",
+      "name": "Bulgarian Split Squats",
+      "description": "Advanced unilateral leg exercise for serious leg development.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/bulgarian-split-squats.mp4",
+      "instructions": [
+        "Place back foot on bench",
+        "Lower into single leg squat",
+        "Keep front knee behind toe",
+        "Drive through front heel"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_029",
+      "name": "Hip Thrusts",
+      "description": "Build powerful glutes with this hip extension exercise.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/hip-thrusts.mp4",
+      "instructions": [
+        "Sit with upper back against bench",
+        "Place weight on hips",
+        "Drive hips up",
+        "Squeeze glutes at top",
+        "Lower with control"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_030",
+      "name": "Goblet Squats",
+      "description": "Beginner-friendly squat variation using a dumbbell.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/goblet-squats.mp4",
+      "instructions": [
+        "Hold dumbbell at chest",
+        "Squat down keeping chest up",
+        "Drive through heels to stand",
+        "Keep core engaged"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_031",
+      "name": "Crunches",
+      "description": "Classic core exercise for strengthening your abdominals.",
+      "sets": 3,
+      "reps": 20,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/crunches.mp4",
+      "instructions": [
+        "Lie on back with knees bent",
+        "Curl upper body toward knees",
+        "Squeeze abs at top",
+        "Lower with control"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_032",
+      "name": "Plank",
+      "description": "Isometric core exercise for building stability and strength.",
+      "sets": 3,
+      "duration": 60,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/plank.mp4",
+      "instructions": [
+        "Hold push-up position",
+        "Keep body in straight line",
+        "Engage core throughout",
+        "Hold for specified time"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_033",
+      "name": "Russian Twists",
+      "description": "Rotational core exercise for building oblique strength.",
+      "sets": 3,
+      "reps": 20,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/russian-twists.mp4",
+      "instructions": [
+        "Sit with knees bent, lean back",
+        "Rotate torso side to side",
+        "Keep core engaged",
+        "Add weight for difficulty"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_034",
+      "name": "Mountain Climbers",
+      "description": "Dynamic core and cardio exercise for full-body conditioning.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 30,
+      "muscleGroups": [
+        "core",
+        "cardio"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/mountain-climbers.mp4",
+      "instructions": [
+        "Start in plank position",
+        "Alternate bringing knees to chest",
+        "Keep core tight",
+        "Move at controlled pace"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_035",
+      "name": "Dead Bug",
+      "description": "Core stability exercise for building deep abdominal strength.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/dead-bug.mp4",
+      "instructions": [
+        "Lie on back, arms and legs up",
+        "Lower opposite arm and leg",
+        "Return to start",
+        "Alternate sides",
+        "Keep lower back pressed to floor"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_036",
+      "name": "Burpees",
+      "description": "Full-body explosive exercise combining squat, push-up, and jump.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "fullBody",
+        "cardio"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/burpees.mp4",
+      "instructions": [
+        "Squat down and place hands on floor",
+        "Jump feet back to plank",
+        "Do push-up",
+        "Jump feet forward",
+        "Explode up with arms overhead"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_037",
+      "name": "Jumping Jacks",
+      "description": "Classic cardio exercise for warming up and getting heart rate up.",
+      "sets": 3,
+      "duration": 30,
+      "restTime": 30,
+      "muscleGroups": [
+        "cardio",
+        "fullBody"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/jumping-jacks.mp4",
+      "instructions": [
+        "Jump feet apart while raising arms",
+        "Jump back together",
+        "Keep steady rhythm",
+        "Land softly"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_038",
+      "name": "High Knees",
+      "description": "Cardio exercise that improves coordination and raises heart rate.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 30,
+      "muscleGroups": [
+        "cardio",
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/high-knees.mp4",
+      "instructions": [
+        "Run in place",
+        "Bring knees up to chest level",
+        "Pump arms naturally",
+        "Land on balls of feet"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_039",
+      "name": "Push-ups",
+      "description": "Classic bodyweight exercise for chest, shoulders, and triceps.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest",
+        "shoulders",
+        "arms"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/push-ups.mp4",
+      "instructions": [
+        "Start in plank position",
+        "Lower body until chest nearly touches floor",
+        "Push back up",
+        "Keep body in straight line"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_040",
+      "name": "Diamond Push-ups",
+      "description": "Advanced push-up variation targeting triceps.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/diamond-push-ups.mp4",
+      "instructions": [
+        "Form diamond with hands",
+        "Lower body keeping elbows close",
+        "Feel triceps working",
+        "Push back up"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_041",
+      "name": "Pike Push-ups",
+      "description": "Bodyweight exercise targeting shoulders and upper chest.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/pike-push-ups.mp4",
+      "instructions": [
+        "Start in downward dog position",
+        "Lower head toward hands",
+        "Push back up",
+        "Keep legs straight"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_042",
+      "name": "Pull-ups",
+      "description": "Ultimate upper body pulling exercise for back and biceps.",
+      "sets": 3,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "back",
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/pull-ups.mp4",
+      "instructions": [
+        "Hang from bar with overhand grip",
+        "Pull body up until chin over bar",
+        "Lower with control",
+        "Keep core engaged"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_043",
+      "name": "Chin-ups",
+      "description": "Underhand grip pull-up variation emphasizing biceps.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "back",
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/chin-ups.mp4",
+      "instructions": [
+        "Hang with underhand grip",
+        "Pull up focusing on biceps",
+        "Lower slowly",
+        "Feel biceps working"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_044",
+      "name": "Wide Grip Pull-ups",
+      "description": "Wide grip variation for maximum lat width development.",
+      "sets": 3,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/wide-grip-pull-ups.mp4",
+      "instructions": [
+        "Use wider than shoulder-width grip",
+        "Pull up focusing on lats",
+        "Lean back slightly at top",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_045",
+      "name": "Cable Tricep Extensions",
+      "description": "Isolate your triceps with this cable extension exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-tricep-extensions.mp4",
+      "instructions": [
+        "Set cable above head height",
+        "Extend arms down",
+        "Squeeze triceps",
+        "Return slowly"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_046",
+      "name": "Overhead Tricep Extension",
+      "description": "Target your triceps with this overhead extension movement.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/overhead-tricep-extension.mp4",
+      "instructions": [
+        "Hold dumbbell overhead",
+        "Lower behind head",
+        "Extend back up",
+        "Keep elbows close"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_047",
+      "name": "Skull Crushers",
+      "description": "Tricep isolation exercise performed lying down.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/skull-crushers.mp4",
+      "instructions": [
+        "Lie on bench with weights overhead",
+        "Lower to forehead",
+        "Extend back up",
+        "Keep elbows stationary"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_048",
+      "name": "Cable Crossovers",
+      "description": "Isolate your chest with this cable fly variation.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-crossovers.mp4",
+      "instructions": [
+        "Set cables at high position",
+        "Bring handles together low",
+        "Squeeze chest",
+        "Feel stretch at start"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_049",
+      "name": "Decline Bench Press",
+      "description": "Target your lower chest with this decline pressing exercise.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/decline-bench-press.mp4",
+      "instructions": [
+        "Secure feet in decline bench",
+        "Lower barbell to lower chest",
+        "Press up explosively",
+        "Feel lower chest working"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_050",
+      "name": "Dumbbell Flys",
+      "description": "Isolate your chest with this dumbbell fly exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/dumbbell-flys.mp4",
+      "instructions": [
+        "Lie on bench with dumbbells",
+        "Lower weights in arc motion",
+        "Feel chest stretch",
+        "Bring weights together"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_051",
+      "name": "Arnold Press",
+      "description": "Rotational shoulder press for complete deltoid development.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/arnold-press.mp4",
+      "instructions": [
+        "Start with palms facing you",
+        "Rotate and press up",
+        "Reverse motion on way down",
+        "Feel all deltoid heads working"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_052",
+      "name": "Upright Rows",
+      "description": "Target your traps and side delts with this pulling exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "shoulders",
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/upright-rows.mp4",
+      "instructions": [
+        "Hold barbell with narrow grip",
+        "Pull to upper chest",
+        "Keep elbows high",
+        "Lower with control"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_053",
+      "name": "Rear Delt Flys",
+      "description": "Isolate your rear deltoids for balanced shoulder development.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/rear-delt-flys.mp4",
+      "instructions": [
+        "Bend forward slightly",
+        "Raise arms out to sides",
+        "Squeeze rear delts",
+        "Lower with control"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_054",
+      "name": "Sumo Deadlifts",
+      "description": "Wide-stance deadlift variation for leg and glute development.",
+      "sets": 4,
+      "reps": 8,
+      "restTime": 120,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/sumo-deadlifts.mp4",
+      "instructions": [
+        "Stand with wide stance",
+        "Grasp bar with hands inside legs",
+        "Drive through heels to stand",
+        "Keep back straight"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_055",
+      "name": "Walking Lunges",
+      "description": "Dynamic lunge variation for functional leg strength.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/walking-lunges.mp4",
+      "instructions": [
+        "Step forward into lunge",
+        "Push through front heel",
+        "Step back leg forward",
+        "Continue walking forward"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_056",
+      "name": "Step-ups",
+      "description": "Unilateral leg exercise using a bench or platform.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/step-ups.mp4",
+      "instructions": [
+        "Step up onto bench",
+        "Drive through heel",
+        "Step down with control",
+        "Alternate legs"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_057",
+      "name": "Wall Sits",
+      "description": "Isometric leg exercise for building quad endurance.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/wall-sits.mp4",
+      "instructions": [
+        "Slide down wall until knees at 90 degrees",
+        "Hold position",
+        "Keep back against wall",
+        "Feel quads burning"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_058",
+      "name": "Good Mornings",
+      "description": "Hip hinge exercise for hamstring and glute development.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/good-mornings.mp4",
+      "instructions": [
+        "Place bar on upper back",
+        "Hinge at hips",
+        "Feel hamstring stretch",
+        "Return to standing"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_059",
+      "name": "Calf Press",
+      "description": "Machine-based calf exercise for building lower leg strength.",
+      "sets": 4,
+      "reps": 20,
+      "restTime": 45,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/calf-press.mp4",
+      "instructions": [
+        "Sit in leg press machine",
+        "Place balls of feet on platform",
+        "Press up on toes",
+        "Lower with control"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_060",
+      "name": "Single Leg Calf Raises",
+      "description": "Unilateral calf exercise for balanced development.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 30,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/single-leg-calf-raises.mp4",
+      "instructions": [
+        "Stand on one foot",
+        "Raise up on toe",
+        "Squeeze calf",
+        "Lower slowly",
+        "Switch legs"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_061",
+      "name": "Bicycle Crunches",
+      "description": "Dynamic core exercise targeting abs and obliques.",
+      "sets": 3,
+      "reps": 20,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/bicycle-crunches.mp4",
+      "instructions": [
+        "Lie on back, hands behind head",
+        "Bring opposite knee to elbow",
+        "Alternate sides",
+        "Keep core engaged"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_062",
+      "name": "Leg Raises",
+      "description": "Lower ab exercise for building core strength.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/leg-raises.mp4",
+      "instructions": [
+        "Lie on back, hands under glutes",
+        "Raise legs up",
+        "Lower with control",
+        "Keep lower back pressed down"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_063",
+      "name": "Side Plank",
+      "description": "Isometric exercise for building oblique strength.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/side-plank.mp4",
+      "instructions": [
+        "Lie on side, prop on elbow",
+        "Raise hips up",
+        "Keep body in straight line",
+        "Hold position",
+        "Switch sides"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_064",
+      "name": "Hanging Leg Raises",
+      "description": "Advanced core exercise performed hanging from bar.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/hanging-leg-raises.mp4",
+      "instructions": [
+        "Hang from pull-up bar",
+        "Raise knees to chest",
+        "Lower with control",
+        "Keep core tight"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_065",
+      "name": "Flutter Kicks",
+      "description": "Lower ab exercise for building endurance.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/flutter-kicks.mp4",
+      "instructions": [
+        "Lie on back, hands under glutes",
+        "Alternate kicking legs",
+        "Keep legs straight",
+        "Feel lower abs working"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_066",
+      "name": "Jump Rope",
+      "description": "High-intensity cardio exercise for coordination and endurance.",
+      "sets": 3,
+      "duration": 60,
+      "restTime": 30,
+      "muscleGroups": [
+        "cardio",
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/jump-rope.mp4",
+      "instructions": [
+        "Hold rope handles",
+        "Jump over rope",
+        "Land on balls of feet",
+        "Keep steady rhythm"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_067",
+      "name": "Box Jumps",
+      "description": "Explosive plyometric exercise for power development.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs",
+        "cardio"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/box-jumps.mp4",
+      "instructions": [
+        "Stand facing box",
+        "Jump onto box",
+        "Land softly",
+        "Step down",
+        "Repeat"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_068",
+      "name": "Sprint Intervals",
+      "description": "High-intensity interval training for maximum calorie burn.",
+      "sets": 5,
+      "duration": 30,
+      "restTime": 60,
+      "muscleGroups": [
+        "cardio",
+        "legs"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/sprint-intervals.mp4",
+      "instructions": [
+        "Sprint at maximum effort",
+        "Rest for recovery period",
+        "Repeat for specified rounds",
+        "Maintain form"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_069",
+      "name": "Bear Crawls",
+      "description": "Full-body movement exercise for strength and coordination.",
+      "sets": 3,
+      "duration": 30,
+      "restTime": 45,
+      "muscleGroups": [
+        "fullBody",
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/bear-crawls.mp4",
+      "instructions": [
+        "Start on hands and feet",
+        "Crawl forward",
+        "Keep knees off ground",
+        "Move opposite hand and foot"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_070",
+      "name": "Thrusters",
+      "description": "Combination of squat and overhead press for full-body power.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 90,
+      "muscleGroups": [
+        "fullBody",
+        "legs",
+        "shoulders"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/thrusters.mp4",
+      "instructions": [
+        "Hold weight at shoulders",
+        "Squat down",
+        "Drive up and press overhead",
+        "Return to start"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_071",
+      "name": "Kettlebell Swings",
+      "description": "Hip-driven movement for posterior chain development.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs",
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/kettlebell-swings.mp4",
+      "instructions": [
+        "Hinge at hips",
+        "Swing kettlebell to chest height",
+        "Drive through hips",
+        "Control the descent"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_072",
+      "name": "Turkish Get-ups",
+      "description": "Complex full-body movement for strength and stability.",
+      "sets": 3,
+      "reps": 5,
+      "restTime": 90,
+      "muscleGroups": [
+        "fullBody",
+        "core"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/turkish-get-ups.mp4",
+      "instructions": [
+        "Start lying with weight overhead",
+        "Sit up",
+        "Get to kneeling",
+        "Stand up",
+        "Reverse to return"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_073",
+      "name": "Renegade Rows",
+      "description": "Combination of plank and rowing for core and back strength.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "back",
+        "core",
+        "arms"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/renegade-rows.mp4",
+      "instructions": [
+        "Hold plank with dumbbells",
+        "Row one weight to side",
+        "Return and alternate",
+        "Keep core tight"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_074",
+      "name": "Man Makers",
+      "description": "Intense full-body exercise combining multiple movements.",
+      "sets": 3,
+      "reps": 8,
+      "restTime": 90,
+      "muscleGroups": [
+        "fullBody",
+        "cardio"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/man-makers.mp4",
+      "instructions": [
+        "Start in plank with dumbbells",
+        "Do renegade row",
+        "Do push-up",
+        "Jump feet forward",
+        "Stand and press overhead"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_075",
+      "name": "Clean and Press",
+      "description": "Olympic lift variation for full-body power development.",
+      "sets": 4,
+      "reps": 6,
+      "restTime": 120,
+      "muscleGroups": [
+        "fullBody",
+        "legs",
+        "shoulders"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/clean-and-press.mp4",
+      "instructions": [
+        "Lift bar from floor",
+        "Explode up catching at shoulders",
+        "Press overhead",
+        "Lower with control"
+      ],
+      "category": "Full Body"
+    },
+    {
+      "id": "ex_076",
+      "name": "Bent Over Rows",
+      "description": "Classic back exercise for building thickness.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/bent-over-rows.mp4",
+      "instructions": [
+        "Bend at hips with straight back",
+        "Pull barbell to lower chest",
+        "Squeeze back muscles",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_077",
+      "name": "Cable Rows",
+      "description": "Seated rowing exercise for back development.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-rows.mp4",
+      "instructions": [
+        "Sit at cable row machine",
+        "Pull handle to torso",
+        "Squeeze shoulder blades",
+        "Return slowly"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_078",
+      "name": "Wide Grip Lat Pulldown",
+      "description": "Wide grip variation for maximum lat width.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "back"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/wide-grip-lat-pulldown.mp4",
+      "instructions": [
+        "Use wide overhand grip",
+        "Pull to upper chest",
+        "Lean back slightly",
+        "Feel lats stretching"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_079",
+      "name": "Close Grip Lat Pulldown",
+      "description": "Close grip variation emphasizing lower lats.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "back",
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/close-grip-lat-pulldown.mp4",
+      "instructions": [
+        "Use narrow grip",
+        "Pull to lower chest",
+        "Feel lower lats working",
+        "Squeeze at bottom"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_080",
+      "name": "Concentration Curls",
+      "description": "Isolated bicep exercise for peak development.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/concentration-curls.mp4",
+      "instructions": [
+        "Sit with arm braced on leg",
+        "Curl weight up",
+        "Squeeze bicep at top",
+        "Lower slowly"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_081",
+      "name": "21s Bicep Curls",
+      "description": "High-rep bicep training technique for muscle growth.",
+      "sets": 3,
+      "reps": 21,
+      "restTime": 60,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/21s-bicep-curls.mp4",
+      "instructions": [
+        "Do 7 reps bottom to middle",
+        "Do 7 reps middle to top",
+        "Do 7 full reps",
+        "That's one set"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_082",
+      "name": "Cable Hammer Curls",
+      "description": "Cable variation of hammer curls for constant tension.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/cable-hammer-curls.mp4",
+      "instructions": [
+        "Use cable with rope attachment",
+        "Curl with neutral grip",
+        "Feel constant tension",
+        "Squeeze at top"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_083",
+      "name": "Incline Dumbbell Curls",
+      "description": "Bicep exercise performed on incline bench for stretch.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/incline-dumbbell-curls.mp4",
+      "instructions": [
+        "Sit on incline bench",
+        "Curl weights up",
+        "Feel stretch at bottom",
+        "Squeeze at top"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_084",
+      "name": "Spider Curls",
+      "description": "Bicep isolation exercise on incline bench.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 45,
+      "muscleGroups": [
+        "arms"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/spider-curls.mp4",
+      "instructions": [
+        "Lie face down on incline bench",
+        "Curl weights up",
+        "Isolate biceps",
+        "Lower with control"
+      ],
+      "category": "Pull Day"
+    },
+    {
+      "id": "ex_085",
+      "name": "Chest Dips",
+      "description": "Advanced bodyweight exercise for chest and triceps.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "chest",
+        "arms"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/chest-dips.mp4",
+      "instructions": [
+        "Lean forward on parallel bars",
+        "Lower body by bending arms",
+        "Feel chest stretch",
+        "Push back up"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_086",
+      "name": "Pec Deck Flys",
+      "description": "Machine-based chest isolation exercise.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/pec-deck-flys.mp4",
+      "instructions": [
+        "Sit in pec deck machine",
+        "Bring arms together",
+        "Squeeze chest",
+        "Return slowly"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_087",
+      "name": "Incline Cable Flys",
+      "description": "Upper chest isolation using cables.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/incline-cable-flys.mp4",
+      "instructions": [
+        "Set bench to incline",
+        "Set cables low",
+        "Bring handles together high",
+        "Feel upper chest working"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_088",
+      "name": "Landmine Press",
+      "description": "Unilateral pressing exercise for chest and shoulders.",
+      "sets": 3,
+      "reps": 10,
+      "restTime": 60,
+      "muscleGroups": [
+        "chest",
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/landmine-press.mp4",
+      "instructions": [
+        "Hold end of barbell",
+        "Press forward and up",
+        "Feel chest and shoulders",
+        "Return with control"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_089",
+      "name": "Pike Push-ups",
+      "description": "Bodyweight shoulder exercise similar to handstand push-ups.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "shoulders"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/pike-push-ups.mp4",
+      "instructions": [
+        "Start in downward dog",
+        "Lower head toward hands",
+        "Push back up",
+        "Keep legs straight"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_090",
+      "name": "Shrugs",
+      "description": "Isolation exercise for building trap thickness.",
+      "sets": 4,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "shoulders",
+        "back"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/shrugs.mp4",
+      "instructions": [
+        "Hold weights at sides",
+        "Shrug shoulders up",
+        "Hold at top",
+        "Lower slowly"
+      ],
+      "category": "Push Day"
+    },
+    {
+      "id": "ex_091",
+      "name": "Front Squats",
+      "description": "Quad-dominant squat variation with bar in front.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 120,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/front-squats.mp4",
+      "instructions": [
+        "Hold bar on front shoulders",
+        "Squat down keeping torso upright",
+        "Drive through heels",
+        "Feel quads working"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_092",
+      "name": "Hack Squats",
+      "description": "Machine-based squat for quad development.",
+      "sets": 4,
+      "reps": 12,
+      "restTime": 90,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/hack-squats.mp4",
+      "instructions": [
+        "Position in hack squat machine",
+        "Lower by bending knees",
+        "Drive back up",
+        "Keep back against pad"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_093",
+      "name": "Stiff Leg Deadlifts",
+      "description": "Hamstring-focused deadlift variation.",
+      "sets": 4,
+      "reps": 10,
+      "restTime": 90,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/stiff-leg-deadlifts.mp4",
+      "instructions": [
+        "Hold bar with straight legs",
+        "Hinge at hips",
+        "Feel hamstring stretch",
+        "Return to standing"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_094",
+      "name": "Reverse Lunges",
+      "description": "Lunge variation stepping backward for different muscle emphasis.",
+      "sets": 3,
+      "reps": 12,
+      "restTime": 60,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/reverse-lunges.mp4",
+      "instructions": [
+        "Step backward into lunge",
+        "Lower back knee",
+        "Push through front heel",
+        "Return to start"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_095",
+      "name": "Glute Bridges",
+      "description": "Hip extension exercise for glute activation.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "legs"
+      ],
+      "difficultyLevel": "beginner",
+      "videoURL": "https://example.com/videos/glute-bridges.mp4",
+      "instructions": [
+        "Lie on back, knees bent",
+        "Drive hips up",
+        "Squeeze glutes",
+        "Lower with control"
+      ],
+      "category": "Leg Day"
+    },
+    {
+      "id": "ex_096",
+      "name": "V-Ups",
+      "description": "Advanced core exercise combining upper and lower ab work.",
+      "sets": 3,
+      "reps": 15,
+      "restTime": 45,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "advanced",
+      "videoURL": "https://example.com/videos/v-ups.mp4",
+      "instructions": [
+        "Lie on back",
+        "Raise legs and torso simultaneously",
+        "Touch toes",
+        "Lower with control"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_097",
+      "name": "Hollow Body Hold",
+      "description": "Isometric core exercise for building abdominal strength.",
+      "sets": 3,
+      "duration": 30,
+      "restTime": 30,
+      "muscleGroups": [
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/hollow-body-hold.mp4",
+      "instructions": [
+        "Lie on back",
+        "Raise shoulders and legs",
+        "Hold position",
+        "Keep lower back pressed down"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_098",
+      "name": "Battle Ropes",
+      "description": "High-intensity full-body cardio exercise.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 60,
+      "muscleGroups": [
+        "cardio",
+        "fullBody",
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/battle-ropes.mp4",
+      "instructions": [
+        "Hold rope ends",
+        "Alternate slamming ropes",
+        "Keep core engaged",
+        "Maintain rhythm"
+      ],
+      "category": "Cardio"
+    },
+    {
+      "id": "ex_099",
+      "name": "Mountain Climber Twists",
+      "description": "Rotational core exercise combining mountain climbers and twists.",
+      "sets": 3,
+      "duration": 45,
+      "restTime": 45,
+      "muscleGroups": [
+        "core",
+        "cardio"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/mountain-climber-twists.mp4",
+      "instructions": [
+        "Start in plank",
+        "Bring knee to opposite elbow",
+        "Alternate sides",
+        "Keep core tight"
+      ],
+      "category": "Core"
+    },
+    {
+      "id": "ex_100",
+      "name": "Farmer's Walk",
+      "description": "Functional strength exercise for grip and full-body stability.",
+      "sets": 3,
+      "duration": 60,
+      "restTime": 90,
+      "muscleGroups": [
+        "fullBody",
+        "core"
+      ],
+      "difficultyLevel": "intermediate",
+      "videoURL": "https://example.com/videos/farmers-walk.mp4",
+      "instructions": [
+        "Hold heavy weights at sides",
+        "Walk forward",
+        "Keep core tight",
+        "Maintain good posture",
+        "Walk for distance or time"
+      ],
+      "category": "Full Body"
+    }
+  ]
+}
