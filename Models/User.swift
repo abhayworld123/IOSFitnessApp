@@ -5,6 +5,7 @@ enum FitnessGoal: String, Codable, CaseIterable {
     case muscleGain = "muscleGain"
     case flexibility = "flexibility"
     case endurance = "endurance"
+    case both = "both"
     
     var displayName: String {
         switch self {
@@ -16,6 +17,8 @@ enum FitnessGoal: String, Codable, CaseIterable {
             return "Flexibility"
         case .endurance:
             return "Endurance"
+        case .both:
+            return "Both"
         }
     }
     
@@ -29,6 +32,29 @@ enum FitnessGoal: String, Codable, CaseIterable {
             return "figure.flexibility"
         case .endurance:
             return "heart.fill"
+        case .both:
+            return "figure.mixed.cardio"
+        }
+    }
+    
+    // Goals for the onboarding screen (three options)
+    static let onboardingGoals: [FitnessGoal] = [
+        .weightLoss,
+        .muscleGain,
+        .both
+    ]
+    
+    // Display names for onboarding screen
+    var onboardingDisplayName: String {
+        switch self {
+        case .weightLoss:
+            return "Weight loss"
+        case .muscleGain:
+            return "Build muscles"
+        case .both:
+            return "Both"
+        default:
+            return displayName
         }
     }
 }
@@ -41,6 +67,18 @@ struct User: Identifiable, Codable {
     var subscriptionStatus: SubscriptionStatus
     var createdAt: Date
     var currentWorkoutPlanId: String?
+    var weight: Double?
+    var height: Double?
+    var age: Int?
+    var location: String?
+    /// Profile onboarding (Firestore); optional for existing accounts.
+    var gender: Gender?
+    var activityLevel: ActivityLevel?
+    var mealPreference: MealPreference?
+    var physicalLimitations: [String]?
+    var interestedActivities: [String]?
+    var heightUnitPreference: HeightUnit?
+    var weightUnitPreference: WeightUnit?
     
     init(
         id: String,
@@ -49,7 +87,18 @@ struct User: Identifiable, Codable {
         fitnessGoal: FitnessGoal? = nil,
         subscriptionStatus: SubscriptionStatus = .free,
         createdAt: Date = Date(),
-        currentWorkoutPlanId: String? = nil
+        currentWorkoutPlanId: String? = nil,
+        weight: Double? = nil,
+        height: Double? = nil,
+        age: Int? = nil,
+        location: String? = nil,
+        gender: Gender? = nil,
+        activityLevel: ActivityLevel? = nil,
+        mealPreference: MealPreference? = nil,
+        physicalLimitations: [String]? = nil,
+        interestedActivities: [String]? = nil,
+        heightUnitPreference: HeightUnit? = nil,
+        weightUnitPreference: WeightUnit? = nil
     ) {
         self.id = id
         self.email = email
@@ -58,6 +107,17 @@ struct User: Identifiable, Codable {
         self.subscriptionStatus = subscriptionStatus
         self.createdAt = createdAt
         self.currentWorkoutPlanId = currentWorkoutPlanId
+        self.weight = weight
+        self.height = height
+        self.age = age
+        self.location = location
+        self.gender = gender
+        self.activityLevel = activityLevel
+        self.mealPreference = mealPreference
+        self.physicalLimitations = physicalLimitations
+        self.interestedActivities = interestedActivities
+        self.heightUnitPreference = heightUnitPreference
+        self.weightUnitPreference = weightUnitPreference
     }
 }
 

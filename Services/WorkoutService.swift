@@ -27,6 +27,27 @@ class WorkoutService: ObservableObject {
         return workouts
     }
     
+    func fetchUserWorkouts(userId: String) async throws -> [Workout] {
+        let snapshot = try await db.collection(workoutsCollection)
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "createdAt", descending: true)
+            .getDocuments()
+
+        var workouts: [Workout] = []
+        for document in snapshot.documents {
+            if let workout = try? Firestore.Decoder().decode(Workout.self, from: document.data()) {
+                workouts.append(workout)
+            }
+        }
+        return workouts
+    }
+    
+    /// Template / "How To" workouts (no userId — app-provided content only).
+    func fetchTemplateWorkouts() async throws -> [Workout] {
+        let all = try await fetchWorkouts()
+        return all.filter { $0.userId == nil }
+    }
+    
     func fetchWorkout(id: String) async throws -> Workout? {
         let document = try await db.collection(workoutsCollection).document(id).getDocument()
         guard let data = document.data() else { return nil }
@@ -93,6 +114,20 @@ class WorkoutService: ObservableObject {
         return exercises
     }
     
+    func fetchAllExercises() async throws -> [Exercise] {
+        let snapshot = try await db.collection(exercisesCollection)
+            .order(by: "name", descending: false)
+            .getDocuments()
+        
+        var exercises: [Exercise] = []
+        for document in snapshot.documents {
+            if let exercise = try? Firestore.Decoder().decode(Exercise.self, from: document.data()) {
+                exercises.append(exercise)
+            }
+        }
+        return exercises
+    }
+    
     func createExercise(_ exercise: Exercise) async throws {
         let data = try Firestore.Encoder().encode(exercise)
         try await db.collection(exercisesCollection).document(exercise.id).setData(data)
@@ -111,6 +146,38 @@ class WorkoutService: ObservableObject {
         }
         
         try await batch.commit()
+    }
+    
+    func seedExercisesFromJSON() async throws {
+        // Load exercises from JSON
+        let exercises = try ExerciseDataService.loadExercisesFromJSON()
+        
+        // Use batch writes (Firestore limit is 500 operations per batch)
+        let batchSize = 500
+        var currentBatch = db.batch()
+        var operationCount = 0
+        
+        for (index, exercise) in exercises.enumerated() {
+            // Check if exercise already exists
+            let docRef = db.collection(exercisesCollection).document(exercise.id)
+            
+            // Use setData with merge to avoid overwriting existing exercises
+            let data = try Firestore.Encoder().encode(exercise)
+            currentBatch.setData(data, forDocument: docRef, merge: true)
+            operationCount += 1
+            
+            // Commit batch if we've reached the limit or it's the last exercise
+            if operationCount >= batchSize || index == exercises.count - 1 {
+                try await currentBatch.commit()
+                currentBatch = db.batch()
+                operationCount = 0
+            }
+        }
+        
+        // Commit any remaining operations
+        if operationCount > 0 {
+            try await currentBatch.commit()
+        }
     }
 }
 

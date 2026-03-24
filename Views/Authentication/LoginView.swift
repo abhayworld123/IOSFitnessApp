@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showForgotPassword = false
     @State private var forgotPasswordEmail = ""
+    @State private var showPhoneAuth = false
     @FocusState private var focusedField: Field?
     
     enum Field {
@@ -161,6 +162,50 @@ struct LoginView: View {
                         .scaleEffect(authViewModel.isLoading ? 0.98 : 1.0)
                         .animation(.easeInOut(duration: AppConstants.Design.animationDuration), value: authViewModel.isLoading)
                         
+                        // Divider
+                        HStack {
+                            Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                            Text("or")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color.white.opacity(0.8))
+                            Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                        }
+                        .padding(.vertical, 8)
+                        
+                        // Sign in with Google
+                        Button(action: {
+                            Task { await authViewModel.signInWithGoogle() }
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 18, weight: .medium))
+                                Text("Sign in with Google")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white.opacity(0.15))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(authViewModel.isLoading)
+                        
+                        // Sign in with Phone
+                        Button(action: { showPhoneAuth = true }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "phone.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("Sign in with Phone")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white.opacity(0.15))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(authViewModel.isLoading)
+                        
                         // Sign Up Link
                         HStack {
                             Text("Don't have an account?")
@@ -187,6 +232,13 @@ struct LoginView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView(email: $forgotPasswordEmail, viewModel: authViewModel)
+        }
+        .sheet(isPresented: $showPhoneAuth) {
+            PhoneAuthSheet(
+                viewModel: authViewModel,
+                onSuccess: { showPhoneAuth = false },
+                onDismiss: { showPhoneAuth = false }
+            )
         }
         .onAppear {
             authViewModel.clearError()
@@ -296,6 +348,131 @@ struct ForgotPasswordView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Phone Auth Sheet
+struct PhoneAuthSheet: View {
+    @ObservedObject var viewModel: AuthViewModel
+    let onSuccess: () -> Void
+    let onDismiss: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var phoneNumber = ""
+    @State private var verificationCode = ""
+    @State private var name = ""
+    @State private var codeSent = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(hex: "#F5F5F7").ignoresSafeArea()
+                VStack(spacing: 24) {
+                    if !codeSent {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Phone number")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1C1C1E"))
+                            TextField("+1 234 567 8900", text: $phoneNumber)
+                                .keyboardType(.phonePad)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(12)
+                        }
+                        Button(action: {
+                            Task {
+                                await viewModel.requestPhoneVerification(phoneNumber: phoneNumber.trimmingCharacters(in: .whitespaces))
+                                if viewModel.phoneVerificationID != nil {
+                                    codeSent = true
+                                    viewModel.clearError()
+                                }
+                            }
+                        }) {
+                            Text("Send code")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(AppConstants.Colors.primary)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                        }
+                        .disabled(phoneNumber.trimmingCharacters(in: .whitespaces).count < 10)
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Verification code")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1C1C1E"))
+                            TextField("Enter 6-digit code", text: $verificationCode)
+                                .keyboardType(.numberPad)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(12)
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Name (optional)")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1C1C1E"))
+                            TextField("Your name", text: $name)
+                                .textContentType(.name)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(12)
+                        }
+                        Button(action: {
+                            guard let verificationID = viewModel.phoneVerificationID else { return }
+                            Task {
+                                await viewModel.signInWithPhone(
+                                    verificationID: verificationID,
+                                    verificationCode: verificationCode,
+                                    name: name.isEmpty ? nil : name
+                                )
+                                if viewModel.isAuthenticated {
+                                    onSuccess()
+                                    dismiss()
+                                }
+                            }
+                        }) {
+                            HStack {
+                                if viewModel.isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                } else {
+                                    Text("Verify & sign in")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(AppConstants.Colors.primary)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(verificationCode.count < 4 || viewModel.isLoading)
+                    }
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 14))
+                            .foregroundColor(AppConstants.Colors.error)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(AppConstants.Colors.error.opacity(0.1))
+                            .cornerRadius(12)
+                    }
+                    Spacer()
+                }
+                .padding(24)
+            }
+            .navigationTitle("Sign in with Phone")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
                         dismiss()
                     }
                 }

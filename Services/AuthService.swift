@@ -1,6 +1,8 @@
 import Foundation
+import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import GoogleSignIn
 
 @MainActor
 class AuthService: ObservableObject {
@@ -13,14 +15,16 @@ class AuthService: ObservableObject {
         // Listen for auth state changes
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
-                if let user = user {
-                    do {
-                        try await self?.fetchUserData(userId: user.uid)
-                    } catch {
-                        // Silently handle errors during auth state changes
-                        // User data will be fetched when explicitly needed
-                        print("Failed to fetch user data: \(error.localizedDescription)")
-                    }
+                guard let user = user else {
+                    self?.currentUser = nil
+                    return
+                }
+                do {
+                    _ = try await self?.fetchUserData(userId: user.uid)
+                } catch {
+                    // Fallback: don't leave stale user; clear and let ViewModel retry or show login
+                    self?.currentUser = nil
+                    print("AuthService: Failed to fetch user data: \(error.localizedDescription)")
                 }
             }
         }
@@ -43,6 +47,47 @@ class AuthService: ObservableObject {
         }
     }
     
+    // MARK: - Sign In with Google
+    func signInWithGoogle() async throws -> User {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first,
+              let rootViewController = window.rootViewController else {
+            throw AuthError.unknown(NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No root view controller"]))
+        }
+        // Use topmost presented VC so Google sheet has a valid presenter (more reliable on device)
+        var presenting = rootViewController
+        while let presented = presenting.presentedViewController {
+            presenting = presented
+        }
+        let result: GIDSignInResult
+        do {
+            result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenting)
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == "com.google.GIDSignIn" && nsError.code == -5 {
+                throw AuthError.cancelled
+            }
+            throw AuthError.from(error)
+        }
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw AuthError.unknown(NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No ID token from Google"]))
+        }
+        // GIDToken is non-optional in Google Sign-In SDK
+        let accessToken = result.user.accessToken.tokenString
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: accessToken
+        )
+        let authResult = try await Auth.auth().signIn(with: credential)
+        let email = result.user.profile?.email ?? ""
+        let name = result.user.profile?.name ?? "Google User"
+        return try await getOrCreateUserData(
+            userId: authResult.user.uid,
+            email: email,
+            name: name
+        )
+    }
+
     // MARK: - Sign Up
     func signUp(email: String, password: String, name: String) async throws -> User {
         do {
@@ -66,9 +111,10 @@ class AuthService: ObservableObject {
     
     // MARK: - Sign Out
     func signOut() throws {
+        currentUser = nil
+        GIDSignIn.sharedInstance.signOut()
         do {
             try Auth.auth().signOut()
-            currentUser = nil
         } catch {
             throw AuthError.signOutFailed
         }
@@ -88,12 +134,37 @@ class AuthService: ObservableObject {
         let document = try await db.collection("users").document(userId).getDocument()
         
         guard let data = document.data() else {
+            currentUser = nil
             throw AuthError.userNotFound
         }
         
-        let user = try Firestore.Decoder().decode(User.self, from: data)
-        currentUser = user
-        return user
+        do {
+            let user = try Firestore.Decoder().decode(User.self, from: data)
+            currentUser = user
+            return user
+        } catch {
+            currentUser = nil
+            throw AuthError.userNotFound
+        }
+    }
+
+    /// Get existing user or create Firestore document for new users (e.g. Google/Phone).
+    private func getOrCreateUserData(userId: String, email: String, name: String) async throws -> User {
+        let document = try await db.collection("users").document(userId).getDocument()
+        if let data = document.data(),
+           let user = try? Firestore.Decoder().decode(User.self, from: data) {
+            currentUser = user
+            return user
+        }
+        let newUser = User(
+            id: userId,
+            email: email.isEmpty ? "\(userId)@auth.local" : email,
+            name: name,
+            subscriptionStatus: .free
+        )
+        try await saveUserData(newUser)
+        currentUser = newUser
+        return newUser
     }
     
     // MARK: - Save User Data
@@ -115,6 +186,127 @@ class AuthService: ObservableObject {
         
         return try await fetchUserData(userId: userId)
     }
+
+    // MARK: - Onboarding profile (merge into Firestore while user completes steps)
+    func mergeOnboardingDetails(_ details: BasicDetailsData) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        var data: [String: Any] = [
+            "updatedAt": Timestamp(date: Date())
+        ]
+
+        if let gender = details.gender {
+            data["gender"] = gender.rawValue
+        }
+        if let age = details.age {
+            data["age"] = age
+        }
+        if let w = details.weight {
+            let kg = details.weightUnit == .kg ? w : details.weightUnit.convert(w, to: .kg)
+            data["weight"] = kg
+        }
+        if let heightCm = details.height {
+            data["height"] = heightCm
+        }
+        if let goal = details.fitnessGoal {
+            data["fitnessGoal"] = goal.rawValue
+        }
+        if let level = details.activityLevel {
+            data["activityLevel"] = level.rawValue
+        }
+        if !details.physicalLimitations.isEmpty {
+            data["physicalLimitations"] = details.physicalLimitations
+        }
+        if !details.interestedActivities.isEmpty {
+            data["interestedActivities"] = details.interestedActivities
+        }
+        if let meal = details.mealPreference {
+            data["mealPreference"] = meal.rawValue
+        }
+        data["heightUnitPreference"] = details.heightUnit.rawValue
+        data["weightUnitPreference"] = details.weightUnit.rawValue
+
+        try await db.collection("users").document(uid).setData(data, merge: true)
+        _ = try await fetchUserData(userId: uid)
+    }
+
+    // MARK: - Phone Auth
+    /// Sends SMS verification to the phone number. Returns verification ID to use in signInWithPhone.
+    func verifyPhoneNumber(_ phoneNumber: String) async throws -> String {
+        #if !targetEnvironment(simulator)
+        // Register for remote notifications only when phone auth is initiated.
+        // This avoids startup-time crashes related to APNs credential updates.
+        await MainActor.run {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+        #endif
+
+        let trimmed = phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.first == "+" else {
+            throw AuthError.unknown(NSError(domain: "AuthService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Phone number must include country code (E.164), e.g. +1XXXXXXXXXX"]))
+        }
+
+        let rootViewController: UIViewController? = await MainActor.run {
+            let windowScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            let keyWindow = windowScenes
+                .flatMap { $0.windows }
+                .first(where: { $0.isKeyWindow })
+            let root = keyWindow?.rootViewController
+            var top = root
+            while let presented = top?.presentedViewController {
+                top = presented
+            }
+            return top
+        }
+        guard let rootViewController else {
+            throw AuthError.unknown(NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No root view controller"]))
+        }
+
+        let uidependency = FirebaseAuthUIDelegate(viewController: rootViewController)
+        return try await withCheckedThrowingContinuation { continuation in
+            PhoneAuthProvider.provider().verifyPhoneNumber(trimmed, uiDelegate: uidependency) { verificationID, error in
+                if let error = error {
+                    let authError = error as NSError
+                    if authError.domain == AuthErrorDomain,
+                       authError.code == AuthErrorCode.invalidPhoneNumber.rawValue {
+                        continuation.resume(throwing: AuthError.invalidPhoneNumber)
+                    } else {
+                        continuation.resume(throwing: AuthError.from(error))
+                    }
+                    return
+                }
+                guard let verificationID = verificationID else {
+                    continuation.resume(throwing: AuthError.unknown(NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No verification ID"])))
+                    return
+                }
+                continuation.resume(returning: verificationID)
+            }
+        }
+    }
+
+    /// Signs in with the verification ID and code from SMS. Creates Firestore user if new.
+    func signInWithPhone(verificationID: String, verificationCode: String, name: String?) async throws -> User {
+        let credential = PhoneAuthProvider.provider().credential(
+            withVerificationID: verificationID,
+            verificationCode: verificationCode
+        )
+        let authResult: AuthDataResult
+        do {
+            authResult = try await Auth.auth().signIn(with: credential)
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == AuthErrorDomain, nsError.code == AuthErrorCode.invalidVerificationCode.rawValue {
+                throw AuthError.invalidVerificationCode
+            }
+            throw AuthError.from(error)
+        }
+        let displayName = name?.isEmpty == false ? name! : "Phone User"
+        return try await getOrCreateUserData(
+            userId: authResult.user.uid,
+            email: "",
+            name: displayName
+        )
+    }
 }
 
 // MARK: - Auth Errors
@@ -126,10 +318,19 @@ enum AuthError: LocalizedError {
     case weakPassword
     case networkError
     case signOutFailed
+    case cancelled
+    case invalidVerificationCode
+    case invalidPhoneNumber
     case unknown(Error)
-    
+
     var errorDescription: String? {
         switch self {
+        case .cancelled:
+            return "Sign in was cancelled."
+        case .invalidVerificationCode:
+            return "Invalid verification code. Please try again."
+        case .invalidPhoneNumber:
+            return "Invalid phone number. Please check and try again."
         case .invalidEmail:
             return "Invalid email address"
         case .invalidPassword:

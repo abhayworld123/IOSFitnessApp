@@ -7,7 +7,8 @@ class AuthViewModel: ObservableObject {
     @Published var currentUser: User?
     @Published var errorMessage: String?
     @Published var isLoading = false
-    
+    @Published var phoneVerificationID: String?
+
     private let authService = AuthService.shared
     
     init() {
@@ -25,13 +26,15 @@ class AuthViewModel: ObservableObject {
                 do {
                     if let user = try await authService.fetchCurrentUserData() {
                         currentUser = user
-                        // Sync subscription status
                         await syncSubscriptionStatus()
+                    } else {
+                        currentUser = nil
+                        isAuthenticated = false
                     }
                 } catch {
-                    // If we can't fetch user data, sign out
-                    try? authService.signOut()
+                    currentUser = nil
                     isAuthenticated = false
+                    try? authService.signOut()
                 }
             }
         } else if isAuthenticated {
@@ -137,6 +140,58 @@ class AuthViewModel: ObservableObject {
         
         isLoading = false
     }
+
+    // MARK: - Sign In with Google
+    func signInWithGoogle() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let user = try await authService.signInWithGoogle()
+            currentUser = user
+            isAuthenticated = true
+            HapticFeedback.success()
+        } catch {
+            if case AuthError.cancelled = error { }
+            else {
+                errorMessage = (error as? AuthError)?.errorDescription ?? "Google sign in failed. Please try again."
+                HapticFeedback.error()
+            }
+        }
+        isLoading = false
+    }
+
+    // MARK: - Phone Auth
+    func requestPhoneVerification(phoneNumber: String) async {
+        errorMessage = nil
+        do {
+            let verificationID = try await authService.verifyPhoneNumber(phoneNumber)
+            phoneVerificationID = verificationID
+            HapticFeedback.success()
+        } catch {
+            errorMessage = (error as? AuthError)?.errorDescription ?? "Failed to send verification code."
+            HapticFeedback.error()
+        }
+    }
+
+    func signInWithPhone(verificationID: String, verificationCode: String, name: String?) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let user = try await authService.signInWithPhone(
+                verificationID: verificationID,
+                verificationCode: verificationCode,
+                name: name
+            )
+            currentUser = user
+            isAuthenticated = true
+            phoneVerificationID = nil
+            HapticFeedback.success()
+        } catch {
+            errorMessage = (error as? AuthError)?.errorDescription ?? "Phone sign in failed. Please try again."
+            HapticFeedback.error()
+        }
+        isLoading = false
+    }
     
     // MARK: - Sign Out
     func signOut() {
@@ -178,6 +233,18 @@ class AuthViewModel: ObservableObject {
     // MARK: - Clear Error
     func clearError() {
         errorMessage = nil
+    }
+
+    // MARK: - Onboarding → Firestore
+    func persistOnboardingDetails(_ details: BasicDetailsData) async {
+        guard isAuthenticated else { return }
+        do {
+            try await authService.mergeOnboardingDetails(details)
+            currentUser = authService.currentUser
+        } catch {
+            // Avoid surfacing transient errors on every step; last successful merge still helps.
+            print("Onboarding Firestore sync: \(error.localizedDescription)")
+        }
     }
 }
 

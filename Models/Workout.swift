@@ -96,6 +96,7 @@ struct Workout: Identifiable, Codable {
     var isPremium: Bool
     var exercises: [String] // Array of exercise IDs
     var caloriesBurned: Int // Estimated calories
+    var userId: String? // User who created this workout
     var createdAt: Date
     var updatedAt: Date
     
@@ -113,6 +114,7 @@ struct Workout: Identifiable, Codable {
         isPremium: Bool = false,
         exercises: [String] = [],
         caloriesBurned: Int = 0,
+        userId: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -129,6 +131,7 @@ struct Workout: Identifiable, Codable {
         self.isPremium = isPremium
         self.exercises = exercises
         self.caloriesBurned = caloriesBurned
+        self.userId = userId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

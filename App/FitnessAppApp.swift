@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import GoogleSignIn
 
 enum AppState {
     case splash
@@ -9,6 +10,7 @@ enum AppState {
 
 @main
 struct FitnessAppApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var themeManager = ThemeManager.shared
     @State private var appState: AppState = .splash
@@ -16,6 +18,10 @@ struct FitnessAppApp: App {
     init() {
         // Initialize Firebase
         FirebaseService.shared.configure()
+        // Required for Google Sign-In on device (prevents "No active configuration" crash)
+        if let clientID = FirebaseApp.app()?.options.clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
     }
     
     var body: some Scene {
@@ -60,6 +66,9 @@ struct FitnessAppApp: App {
             }
             .preferredColorScheme(themeManager.currentTheme.colorScheme)
             .animation(.easeInOut(duration: 0.5), value: appState)
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
+            }
         }
     }
 }

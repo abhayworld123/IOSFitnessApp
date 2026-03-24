@@ -25,13 +25,20 @@ class WorkoutViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Fetch Workouts
+    // MARK: - Fetch Workouts (templates + current user's workouts)
     func fetchWorkouts() async {
         isLoading = true
         errorMessage = nil
+        let userId = authService.getCurrentAuthUser()?.uid
         
         do {
-            workouts = try await workoutService.fetchWorkouts()
+            var all: [Workout] = try await workoutService.fetchTemplateWorkouts()
+            if let userId = userId, !userId.isEmpty {
+                let userWorkouts = try await workoutService.fetchUserWorkouts(userId: userId)
+                let templateIds = Set(all.map(\.id))
+                all = all + userWorkouts.filter { !templateIds.contains($0.id) }
+            }
+            workouts = all
             applyFilters()
         } catch {
             errorMessage = "Failed to load workouts. Please try again."

@@ -8,22 +8,37 @@ class ProfileViewModel: ObservableObject {
     @Published var totalTimeExercised: Int = 0 // in minutes
     @Published var currentStreak: Int = 0
     @Published var recentWorkouts: [WorkoutHistoryItem] = []
+    @Published var monthlyChartData: [DailyWorkoutData] = []
+    @Published var monthlyStepsData: [DailyWorkoutData] = []
+    @Published var monthlyWaterData: [DailyWorkoutData] = []
+    @Published var badges: [Badge] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     private let db = Firestore.firestore()
     private let authService = AuthService.shared
     private let workoutService = WorkoutService.shared
+    private let dailyStatsService = DailyStatsService.shared
+    private let waterService = WaterTrackingService.shared
     
     // MARK: - Fetch Statistics
     
+    static let mockBadges: [Badge] = [
+        Badge(id: "1", title: "1st Activity", imageName: "badge"),
+        Badge(id: "2", title: "5th Activity", imageName: "badge"),
+        Badge(id: "3", title: "On a roll", imageName: "fire"),
+        Badge(id: "4", title: "Reached weight goals", imageName: "kg")
+    ]
+    
     func fetchUserStatistics() async {
         guard let userId = authService.getCurrentAuthUser()?.uid else {
+            badges = ProfileViewModel.mockBadges
             return
         }
         
         isLoading = true
         errorMessage = nil
+        badges = ProfileViewModel.mockBadges
         
         do {
             // Fetch completed workouts
@@ -61,6 +76,12 @@ class ProfileViewModel: ObservableObject {
             let completionDates = Array(workoutDateMap.values)
             currentStreak = calculateStreak(from: completionDates)
             
+            // Build monthly chart data for current month
+            monthlyChartData = buildMonthlyChartData(from: completionDates)
+            
+            // Fetch monthly steps and water for analytics
+            await fetchMonthlyStepsAndWater(userId: userId)
+            
             // Fetch recent workouts for history
             await fetchRecentWorkouts(workoutIds: completedWorkoutIds, workoutDateMap: workoutDateMap)
             
@@ -70,6 +91,70 @@ class ProfileViewModel: ObservableObject {
         }
         
         isLoading = false
+    }
+    
+    // MARK: - Monthly Steps & Water
+    
+    private func fetchMonthlyStepsAndWater(userId: String) async {
+        let calendar = Calendar.current
+        let now = Date()
+        guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+              let monthEnd = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart) else { return }
+        let rangeEnd = calendar.date(byAdding: .day, value: 1, to: monthEnd)!
+        
+        do {
+            let dailyStats = try await dailyStatsService.fetchMonthlyDailyStats(userId: userId, startDate: monthStart, endDate: monthEnd)
+            let waterRecords = try await waterService.fetchWeeklyData(userId: userId, startDate: monthStart, endDate: rangeEnd)
+            
+            var stepsByDay: [Date: Int] = [:]
+            var waterByDay: [Date: Int] = [:]
+            for s in dailyStats {
+                stepsByDay[calendar.startOfDay(for: s.date)] = s.steps
+            }
+            for w in waterRecords {
+                waterByDay[calendar.startOfDay(for: w.date)] = w.glassesConsumed
+            }
+            
+            guard let dayCount = calendar.range(of: .day, in: .month, for: now)?.count else { return }
+            var stepsChart: [DailyWorkoutData] = []
+            var waterChart: [DailyWorkoutData] = []
+            for offset in 0..<dayCount {
+                guard let date = calendar.date(byAdding: .day, value: offset, to: monthStart) else { continue }
+                let dayStart = calendar.startOfDay(for: date)
+                stepsChart.append(DailyWorkoutData(date: date, workoutsCompleted: stepsByDay[dayStart] ?? 0, duration: 0, caloriesBurned: 0))
+                waterChart.append(DailyWorkoutData(date: date, workoutsCompleted: waterByDay[dayStart] ?? 0, duration: 0, caloriesBurned: 0))
+            }
+            monthlyStepsData = stepsChart
+            monthlyWaterData = waterChart
+        } catch {
+            print("ProfileViewModel: fetch monthly steps/water failed: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Monthly Chart Data
+    
+    private func buildMonthlyChartData(from completionDates: [Date]) -> [DailyWorkoutData] {
+        let calendar = Calendar.current
+        let now = Date()
+        guard let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+              let monthEnd = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart),
+              let dayCount = calendar.range(of: .day, in: .month, for: now)?.count else {
+            return []
+        }
+        var dayCounts: [Date: Int] = [:]
+        for offset in 0..<dayCount {
+            guard let date = calendar.date(byAdding: .day, value: offset, to: monthStart) else { continue }
+            dayCounts[date] = 0
+        }
+        for d in completionDates {
+            let dayStart = calendar.startOfDay(for: d)
+            if dayStart >= monthStart && dayStart <= monthEnd {
+                dayCounts[dayStart, default: 0] += 1
+            }
+        }
+        return dayCounts.sorted(by: { $0.key < $1.key }).map { date, count in
+            DailyWorkoutData(date: date, workoutsCompleted: count, duration: 0, caloriesBurned: 0)
+        }
     }
     
     // MARK: - Fetch Recent Workouts

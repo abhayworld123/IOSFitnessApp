@@ -6,6 +6,7 @@ struct SignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var showPhoneAuth = false
     @FocusState private var focusedField: Field?
     
     enum Field {
@@ -228,6 +229,50 @@ struct SignUpView: View {
                         .scaleEffect(authViewModel.isLoading ? 0.98 : 1.0)
                         .animation(.easeInOut(duration: AppConstants.Design.animationDuration), value: authViewModel.isLoading)
                         
+                        // Divider
+                        HStack {
+                            Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                            Text("or")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color.white.opacity(0.8))
+                            Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                        }
+                        .padding(.vertical, 8)
+                        
+                        // Sign up with Google
+                        Button(action: {
+                            Task { await authViewModel.signInWithGoogle() }
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 18, weight: .medium))
+                                Text("Sign up with Google")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white.opacity(0.15))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(authViewModel.isLoading)
+                        
+                        // Sign up with Phone
+                        Button(action: { showPhoneAuth = true }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "phone.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("Sign up with Phone")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white.opacity(0.15))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(authViewModel.isLoading)
+                        
                         // Sign In Link
                         HStack {
                             Text("Already have an account?")
@@ -252,6 +297,13 @@ struct SignUpView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showPhoneAuth) {
+            PhoneAuthSheet(
+                viewModel: authViewModel,
+                onSuccess: { showPhoneAuth = false },
+                onDismiss: { showPhoneAuth = false }
+            )
+        }
         .onAppear {
             authViewModel.clearError()
         }

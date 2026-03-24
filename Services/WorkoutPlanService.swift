@@ -171,6 +171,11 @@ class WorkoutPlanService: ObservableObject {
             if workout.category == .cardio || workout.category == .hiit {
                 score += 10
             }
+        case .both:
+            // Both weight loss and muscle gain - balanced approach
+            if workout.category == .strength || workout.category == .cardio || workout.category == .hiit {
+                score += 10
+            }
         }
         
         // Difficulty matching
@@ -274,6 +279,9 @@ class WorkoutPlanService: ObservableObject {
         case .endurance:
             // More cardio for endurance
             return (strength: max(1, daysPerWeek / 3), cardio: daysPerWeek - max(1, daysPerWeek / 3))
+        case .both:
+            // Balanced approach for both weight loss and muscle gain
+            return (strength: max(1, daysPerWeek / 2), cardio: daysPerWeek - max(1, daysPerWeek / 2))
         }
     }
     
