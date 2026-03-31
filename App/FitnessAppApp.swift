@@ -45,7 +45,7 @@ struct FitnessAppApp: App {
                     .zIndex(1)
                     
                 case .onboarding:
-                    OnboardingView(isPresented: Binding(
+                    NewOnboardingView(isPresented: Binding(
                         get: { appState == .onboarding },
                         set: { isPresented in
                             if !isPresented {
@@ -55,6 +55,7 @@ struct FitnessAppApp: App {
                             }
                         }
                     ))
+                    .environmentObject(authViewModel)
                     .transition(.opacity)
                     .zIndex(1)
                     

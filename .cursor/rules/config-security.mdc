@@ -1,0 +1,24 @@
+---
+description: Protect secrets and local config; never leak credentials in code or chat
+alwaysApply: true
+---
+
+# Config and secrets security
+
+## Never do this
+
+- Paste real API keys, tokens, private keys, Firebase service account JSON, R2/Admin keys, or full `.env` contents into code, commits, or assistant responses.
+- Commit files that hold secrets: `.env`, `.env.local`, `**/secrets/**`, `*serviceAccount*.json`, `GoogleService-Info.plist`, or similar.
+- Log or print environment variable values in production paths (redact or omit).
+
+## Do this instead
+
+- Keep secrets in ignored local files (e.g. copy from `.env.example`), Keychain, or your host’s secret manager.
+- In code, read via `ProcessInfo.processInfo.environment`, `Bundle` (non-secret config only), or server-side env only—never hardcode.
+- When showing examples, use placeholders like `YOUR_KEY`, `sk-...`, or truncated values.
+- If a secret was exposed, tell the user to rotate/revoke it; do not repeat the leaked value.
+
+## This repo
+
+- `exercise-video-admin`: server env is `server/.env`; web is `web/.env`; Firebase key file path is configured via env (see `.env.example`).
+- Cursor should not rely on reading ignored config files for “current values”—use `.env.example` and docs for shape only.

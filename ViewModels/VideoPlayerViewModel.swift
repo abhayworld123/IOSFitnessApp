@@ -19,6 +19,8 @@ class VideoPlayerViewModel: ObservableObject {
     var player: AVPlayer?
     var videoSourceType: VideoSourceType = .directURL
     var embedURL: URL?
+    /// If set, hero playback prefers this media URL (resolved from merged exercise catalog) over `Workout.videoURL`.
+    private var heroMediaURLString: String?
     private var timeObserver: Any?
     private var cancellables = Set<AnyCancellable>()
     private var playerItem: AVPlayerItem?
@@ -33,12 +35,68 @@ class VideoPlayerViewModel: ObservableObject {
         self.workout = workout
         self.dayId = dayId
         self.planViewModel = planViewModel
-        setupPlayer()
+        // Delay setup until the view resolves the hero media URL (exercise API -> `Exercise.animationURL`).
+        isLoading = true
     }
     
     // MARK: - Player Setup
+
+    private func resetPlayerState() {
+        isLoading = false
+        errorMessage = nil
+        isBuffering = false
+        isPlaying = false
+        currentTime = 0
+        duration = 0
+
+        if let timeObserver = timeObserver, let player = player {
+            player.removeTimeObserver(timeObserver)
+        }
+        self.timeObserver = nil
+
+        cancellables.removeAll()
+        NotificationCenter.default.removeObserver(self)
+
+        embedURL = nil
+        playerItem = nil
+        player = nil
+        pipController = nil
+
+        // Default until setupPlayer picks a specific source.
+        videoSourceType = .directURL
+    }
     
     func setupPlayer() {
+        resetPlayerState()
+
+        // Prefer hero media (resolved from merged exercise media) when provided.
+        if let heroString = heroMediaURLString?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !heroString.isEmpty {
+            let parsed = videoService.parseVideoURL(heroString)
+            videoSourceType = parsed.type
+
+            switch parsed.type {
+            case .youtube, .vimeo:
+                if let embedURL = parsed.url {
+                    self.embedURL = embedURL
+                    isLoading = true
+                    return
+                } else {
+                    errorMessage = "Invalid video URL"
+                    return
+                }
+            case .directURL:
+                if let url = parsed.url {
+                    loadVideo(url: url)
+                    return
+                } else {
+                    errorMessage = "Invalid video URL"
+                    return
+                }
+            }
+        }
+
         // Check if workout already has videoSourceType set
         if let sourceType = workout.videoSourceType {
             videoSourceType = sourceType
@@ -90,6 +148,12 @@ class VideoPlayerViewModel: ObservableObject {
                 errorMessage = "No video URL available"
             }
         }
+    }
+
+    /// Updates the hero playback URL and re-initializes the player.
+    func setHeroMediaURLString(_ urlString: String?) {
+        heroMediaURLString = urlString
+        setupPlayer()
     }
     
     private func setupDirectURLPlayer() {
@@ -280,15 +344,15 @@ class VideoPlayerViewModel: ObservableObject {
             "workoutId": workout.id,
             "progress": duration > 0 ? currentTime / duration : 0,
             "currentTime": currentTime,
-            "duration": duration,
+            FirestoreFields.duration: duration,
             "lastUpdated": Timestamp(date: Date())
         ]
         
         do {
             let db = Firestore.firestore()
-            try await db.collection("userProgress")
+            try await db.collection(FirestoreCollections.userProgress)
                 .document(userId)
-                .collection("completedWorkouts")
+                .collection(FirestoreFields.completedWorkouts)
                 .document(workout.id)
                 .setData(progress, merge: true)
         } catch {
@@ -303,15 +367,15 @@ class VideoPlayerViewModel: ObservableObject {
         
         do {
             let db = Firestore.firestore()
-            let document = try await db.collection("userProgress")
+            let document = try await db.collection(FirestoreCollections.userProgress)
                 .document(userId)
-                .collection("completedWorkouts")
+                .collection(FirestoreFields.completedWorkouts)
                 .document(workout.id)
                 .getDocument()
             
             if let data = document.data(),
                let currentTime = data["currentTime"] as? Double,
-               let duration = data["duration"] as? Double,
+               let duration = data[FirestoreFields.duration] as? Double,
                duration > 0 {
                 // Resume from last position if less than 90% complete
                 if currentTime / duration < 0.9 {
@@ -335,15 +399,15 @@ class VideoPlayerViewModel: ObservableObject {
             "completedDate": Timestamp(date: Date()),
             "progress": 1.0,
             "currentTime": finalDuration,
-            "duration": finalDuration,
+            FirestoreFields.duration: finalDuration,
             "lastUpdated": Timestamp(date: Date())
         ]
         
         do {
             let db = Firestore.firestore()
-            try await db.collection("userProgress")
+            try await db.collection(FirestoreCollections.userProgress)
                 .document(userId)
-                .collection("completedWorkouts")
+                .collection(FirestoreFields.completedWorkouts)
                 .document(workout.id)
                 .setData(progress, merge: true)
             

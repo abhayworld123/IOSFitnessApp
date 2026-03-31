@@ -1,5 +1,6 @@
 import SwiftUI
 import Lottie
+import AVKit
 
 struct ExerciseDetailView: View {
     let exercise: Exercise
@@ -12,6 +13,7 @@ struct ExerciseDetailView: View {
     @State private var showVideoPlayer = false
     @State private var animationURL: URL?
     @State private var animationError: String?
+    @State private var exerciseVideoPlayer: AVPlayer?
     
     var body: some View {
         NavigationView {
@@ -28,8 +30,13 @@ struct ExerciseDetailView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 20)
                         
-                        // Lottie Animation
-                        if let animationURL = animationURL {
+                        // Lottie JSON or direct video (e.g. MP4 from R2)
+                        if let player = exerciseVideoPlayer {
+                            VideoPlayer(player: player)
+                                .frame(height: 300)
+                                .cornerRadius(AppConstants.Design.cornerRadius)
+                                .padding(.horizontal, 20)
+                        } else if let animationURL = animationURL {
                             RemoteLottieAnimationView(url: animationURL)
                                 .frame(height: 300)
                                 .cornerRadius(AppConstants.Design.cornerRadius)
@@ -231,13 +238,15 @@ struct ExerciseDetailView: View {
                 }
             }
             .onAppear {
-                loadAnimation()
+                loadMedia()
                 if exercise.isTimed, let duration = exercise.duration {
                     timerSeconds = duration
                 }
             }
             .onDisappear {
                 stopTimer()
+                exerciseVideoPlayer?.pause()
+                exerciseVideoPlayer = nil
             }
             .fullScreenCover(isPresented: $showVideoPlayer) {
                 if let workout = workout {
@@ -326,18 +335,36 @@ struct ExerciseDetailView: View {
         return String(format: "%02d:%02d", minutes, secs)
     }
     
-    // MARK: - Animation Loading
+    // MARK: - Animation / video loading
     
-    private func loadAnimation() {
-        guard let animationURLString = exercise.animationURL, !animationURLString.isEmpty else {
-            animationError = "No animation available"
+    /// `animationURL` may be Lottie JSON or a direct video URL (e.g. MP4 on R2).
+    private func isDirectVideoURL(_ string: String) -> Bool {
+        let lower = string.lowercased()
+        let pathPart = lower.split(separator: "?").first.map(String.init) ?? lower
+        let ext = [".mp4", ".webm", ".mov", ".m4v"]
+        if ext.contains(where: { pathPart.hasSuffix($0) }) { return true }
+        return ext.contains { lower.contains($0) }
+    }
+    
+    private func loadMedia() {
+        animationError = nil
+        animationURL = nil
+        exerciseVideoPlayer = nil
+        
+        guard let raw = exercise.animationURL?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            animationError = "No video or animation available"
             return
         }
         
-        if let url = URL(string: animationURLString) {
-            animationURL = url
+        guard let url = URL(string: raw) else {
+            animationError = "Invalid media URL"
+            return
+        }
+        
+        if isDirectVideoURL(raw) {
+            exerciseVideoPlayer = AVPlayer(url: url)
         } else {
-            animationError = "Invalid animation URL"
+            animationURL = url
         }
     }
 }

@@ -40,7 +40,9 @@ struct Exercise: Identifiable, Codable {
     var reps: Int?
     var duration: Int? // in seconds (for timed exercises)
     var restTime: Int // in seconds
-    var animationURL: String? // Lottie JSON URL
+    var animationURL: String? // Video or Lottie URL
+    /// Poster / still image for lists and cards (HTTPS).
+    var thumbnailURL: String?
     var muscleGroups: [MuscleGroup]
     var difficultyLevel: DifficultyLevel
     var instructions: [String]
@@ -56,6 +58,7 @@ struct Exercise: Identifiable, Codable {
         duration: Int? = nil,
         restTime: Int = 30,
         animationURL: String? = nil,
+        thumbnailURL: String? = nil,
         muscleGroups: [MuscleGroup],
         difficultyLevel: DifficultyLevel,
         instructions: [String],
@@ -70,6 +73,7 @@ struct Exercise: Identifiable, Codable {
         self.duration = duration
         self.restTime = restTime
         self.animationURL = animationURL
+        self.thumbnailURL = thumbnailURL
         self.muscleGroups = muscleGroups
         self.difficultyLevel = difficultyLevel
         self.instructions = instructions

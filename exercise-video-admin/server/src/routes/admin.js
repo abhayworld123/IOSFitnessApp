@@ -1,0 +1,235 @@
+import { Router } from 'express';
+import { config } from '../config.js';
+import { firestore, fv } from '../firebase.js';
+import {
+  assertObjectExists,
+  buildObjectKey,
+  buildThumbnailObjectKey,
+  guessContentType,
+  presignPut,
+  publicUrlForKey,
+} from '../r2.js';
+import { parseHttpsUrl, fetchUrlToR2 } from '../importUrl.js';
+import { docToExercise } from '../serialize.js';
+
+const router = Router();
+const col = () => firestore().collection(config.exercisesCollection);
+
+router.get('/exercises', async (_req, res) => {
+  try {
+    const snap = await col().get();
+    const list = snap.docs.map((d) => docToExercise(d.id, d.data())).filter(Boolean);
+    list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const payload = { exercises: list };
+    try {
+      JSON.stringify(payload);
+    } catch (ser) {
+      console.error('Exercise list JSON.stringify failed', ser);
+      return res.status(500).json({ error: `Serialization failed: ${ser.message}` });
+    }
+    res.json(payload);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'List failed' });
+  }
+});
+
+router.get('/exercises/:id', async (req, res) => {
+  try {
+    const d = await col().doc(req.params.id).get();
+    if (!d.exists) return res.status(404).json({ error: 'Not found' });
+    res.json(docToExercise(d.id, d.data()));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Get failed' });
+  }
+});
+
+router.patch('/exercises/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body || {};
+    const allowed = [
+      'name',
+      'description',
+      'sets',
+      'reps',
+      'duration',
+      'restTime',
+      'animationURL',
+      'thumbnailURL',
+      'videoURL',
+      'muscleGroups',
+      'difficultyLevel',
+      'instructions',
+    ];
+    const patch = {};
+    for (const k of allowed) {
+      if (body[k] !== undefined) patch[k] = body[k];
+    }
+    if (body.videoURL !== undefined && body.animationURL === undefined) {
+      patch.animationURL = body.videoURL;
+    }
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'No valid fields' });
+    }
+    patch.updatedAt = fv().serverTimestamp();
+    await col().doc(id).set(patch, { merge: true });
+    const d = await col().doc(id).get();
+    res.json(docToExercise(d.id, d.data()));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Patch failed' });
+  }
+});
+
+router.post('/exercises/:id/presign', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filename = (req.body && req.body.filename) || 'video.mp4';
+    const contentType = (req.body && req.body.contentType) || guessContentType(filename);
+    const key = buildObjectKey(id, filename);
+    const signed = await presignPut(key, contentType);
+    res.json(signed);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Presign failed' });
+  }
+});
+
+router.post('/exercises/:id/video/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = req.body && req.body.key;
+    if (!key || typeof key !== 'string') {
+      return res.status(400).json({ error: 'key required' });
+    }
+    if (!key.startsWith(`exercises/${id}/`)) {
+      return res.status(400).json({ error: 'Invalid key for exercise' });
+    }
+    await assertObjectExists(key);
+    const url = publicUrlForKey(key);
+    await col().doc(id).set(
+      { animationURL: url, updatedAt: fv().serverTimestamp() },
+      { merge: true }
+    );
+    const d = await col().doc(id).get();
+    res.json({ animationURL: url, exercise: docToExercise(d.id, d.data()) });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Complete failed' });
+  }
+});
+
+router.post('/exercises/:id/thumbnail/presign', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filename = (req.body && req.body.filename) || 'thumbnail.jpg';
+    const contentType = (req.body && req.body.contentType) || guessContentType(filename);
+    const key = buildThumbnailObjectKey(id, filename);
+    const signed = await presignPut(key, contentType);
+    res.json(signed);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Thumbnail presign failed' });
+  }
+});
+
+router.post('/exercises/:id/thumbnail/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = req.body && req.body.key;
+    if (!key || typeof key !== 'string') {
+      return res.status(400).json({ error: 'key required' });
+    }
+    if (!key.startsWith(`exercises/${id}/`)) {
+      return res.status(400).json({ error: 'Invalid key for exercise' });
+    }
+    await assertObjectExists(key);
+    const url = publicUrlForKey(key);
+    await col().doc(id).set(
+      { thumbnailURL: url, updatedAt: fv().serverTimestamp() },
+      { merge: true }
+    );
+    const d = await col().doc(id).get();
+    res.json({ thumbnailURL: url, exercise: docToExercise(d.id, d.data()) });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Thumbnail complete failed' });
+  }
+});
+
+const MAX_VIDEO_IMPORT_BYTES = 500 * 1024 * 1024;
+const MAX_IMAGE_IMPORT_BYTES = 15 * 1024 * 1024;
+const VIDEO_IMPORT_TIMEOUT_MS = 10 * 60 * 1000;
+const IMAGE_IMPORT_TIMEOUT_MS = 2 * 60 * 1000;
+
+function filenameFromUrlPath(pathname, fallback) {
+  const seg = (pathname || '').split('/').pop() || fallback;
+  return seg.split('?')[0] || fallback;
+}
+
+router.post('/exercises/:id/video/import-url', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const url = parseHttpsUrl(req.body && req.body.url);
+    const fn = filenameFromUrlPath(url.pathname, 'video.mp4');
+    const key = buildObjectKey(id, fn);
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), VIDEO_IMPORT_TIMEOUT_MS);
+    try {
+      const { publicUrl } = await fetchUrlToR2(url, {
+        maxBytes: MAX_VIDEO_IMPORT_BYTES,
+        kind: 'video',
+        key,
+        signal: ac.signal,
+      });
+      await col().doc(id).set(
+        { animationURL: publicUrl, updatedAt: fv().serverTimestamp() },
+        { merge: true }
+      );
+      const d = await col().doc(id).get();
+      res.json({ animationURL: publicUrl, exercise: docToExercise(d.id, d.data()) });
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (e) {
+    console.error(e);
+    const msg = e.name === 'AbortError' ? 'Import timed out' : e.message || 'Import failed';
+    res.status(500).json({ error: msg });
+  }
+});
+
+router.post('/exercises/:id/thumbnail/import-url', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const url = parseHttpsUrl(req.body && req.body.url);
+    const fn = filenameFromUrlPath(url.pathname, 'thumb.jpg');
+    const key = buildThumbnailObjectKey(id, fn);
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), IMAGE_IMPORT_TIMEOUT_MS);
+    try {
+      const { publicUrl } = await fetchUrlToR2(url, {
+        maxBytes: MAX_IMAGE_IMPORT_BYTES,
+        kind: 'image',
+        key,
+        signal: ac.signal,
+      });
+      await col().doc(id).set(
+        { thumbnailURL: publicUrl, updatedAt: fv().serverTimestamp() },
+        { merge: true }
+      );
+      const d = await col().doc(id).get();
+      res.json({ thumbnailURL: publicUrl, exercise: docToExercise(d.id, d.data()) });
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (e) {
+    console.error(e);
+    const msg = e.name === 'AbortError' ? 'Import timed out' : e.message || 'Import failed';
+    res.status(500).json({ error: msg });
+  }
+});
+
+export default router;
+

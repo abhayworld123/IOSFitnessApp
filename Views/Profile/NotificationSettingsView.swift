@@ -84,7 +84,7 @@ class NotificationSettingsViewModel: ObservableObject {
         guard let userId = authService.getCurrentAuthUser()?.uid else { return }
         
         do {
-            let doc = try await db.collection("users")
+            let doc = try await db.collection(FirestoreCollections.users)
                 .document(userId)
                 .collection("settings")
                 .document("notifications")
@@ -113,7 +113,7 @@ class NotificationSettingsViewModel: ObservableObject {
         ]
         
         do {
-            try await db.collection("users")
+            try await db.collection(FirestoreCollections.users)
                 .document(userId)
                 .collection("settings")
                 .document("notifications")

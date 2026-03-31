@@ -73,9 +73,9 @@ class SubscriptionService: ObservableObject {
         
         // Check Firestore first
         do {
-            let userDoc = try await db.collection("users").document(userId).getDocument()
+            let userDoc = try await db.collection(FirestoreCollections.users).document(userId).getDocument()
             if let data = userDoc.data(),
-               let statusString = data["subscriptionStatus"] as? String,
+               let statusString = data[FirestoreFields.subscriptionStatus] as? String,
                let status = SubscriptionStatus(rawValue: statusString) {
                 
                 // If premium, verify with StoreKit
@@ -84,8 +84,8 @@ class SubscriptionService: ObservableObject {
                         return .premium
                     } else {
                         // Subscription expired, update Firestore
-                        try await db.collection("users").document(userId).updateData([
-                            "subscriptionStatus": SubscriptionStatus.free.rawValue
+                        try await db.collection(FirestoreCollections.users).document(userId).updateData([
+                            FirestoreFields.subscriptionStatus: SubscriptionStatus.free.rawValue
                         ])
                         return .free
                     }
@@ -101,8 +101,8 @@ class SubscriptionService: ObservableObject {
         if await verifySubscriptionWithStoreKit() {
             // Update Firestore
             if let userId = AuthService.shared.getCurrentAuthUser()?.uid {
-                try? await db.collection("users").document(userId).updateData([
-                    "subscriptionStatus": SubscriptionStatus.premium.rawValue
+                try? await db.collection(FirestoreCollections.users).document(userId).updateData([
+                    FirestoreFields.subscriptionStatus: SubscriptionStatus.premium.rawValue
                 ])
             }
             return .premium
@@ -154,8 +154,8 @@ class SubscriptionService: ObservableObject {
         let isActive = transaction.revocationDate == nil
         
         do {
-            try await db.collection("users").document(userId).updateData([
-                "subscriptionStatus": isActive ? SubscriptionStatus.premium.rawValue : SubscriptionStatus.free.rawValue,
+            try await db.collection(FirestoreCollections.users).document(userId).updateData([
+                FirestoreFields.subscriptionStatus: isActive ? SubscriptionStatus.premium.rawValue : SubscriptionStatus.free.rawValue,
                 "subscriptionExpiryDate": transaction.expirationDate?.timeIntervalSince1970 ?? NSNull(),
                 "subscriptionUpdatedAt": Timestamp(date: Date())
             ])

@@ -73,6 +73,7 @@ struct MainTabView: View {
             VStack {
                 Spacer()
                 CustomTabBar(selectedTab: $selectedTab)
+                    .accessibilityElement(children: .contain)
             }
         }
         .onAppear {

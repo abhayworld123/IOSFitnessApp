@@ -10,6 +10,8 @@ struct ExerciseSelectionView: View {
     let existingWorkout: Workout?
     @State private var showSuccessAlert = false
     @State private var isSaving = false
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     
     init(workoutName: String, workoutDescription: String, viewModel: CreateWorkoutViewModel, existingWorkout: Workout? = nil, onDismiss: (() -> Void)? = nil) {
         self.workoutName = workoutName
@@ -85,6 +87,11 @@ struct ExerciseSelectionView: View {
                  ? "Your workout '\(workoutName)' has been updated successfully."
                  : "Your workout '\(workoutName)' has been created successfully.")
         }
+        .alert("Save Failed", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
     // MARK: - Header
@@ -102,6 +109,7 @@ struct ExerciseSelectionView: View {
                 }
                 .foregroundColor(.primary)
             }
+            .accessibilityLabel("Go back")
             
             Spacer()
             
@@ -147,6 +155,7 @@ struct ExerciseSelectionView: View {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
                 }
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(.horizontal, 14)
@@ -302,6 +311,7 @@ struct ExerciseSelectionView: View {
             .cornerRadius(12)
         }
         .disabled(!viewModel.canSaveWorkout() || isSaving)
+        .accessibilityLabel("Save workout")
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 20)
@@ -328,9 +338,9 @@ struct ExerciseSelectionView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
+                    errorMessage = error.localizedDescription
+                    showErrorAlert = true
                     HapticFeedback.error()
-                    // TODO: Show error alert
-                    print("Failed to create workout: \(error)")
                 }
             }
         }
@@ -374,6 +384,8 @@ struct ExerciseSelectionRow: View {
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(exercise.name)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

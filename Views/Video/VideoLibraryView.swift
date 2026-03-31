@@ -1,10 +1,16 @@
 import SwiftUI
 
+private enum VideoLibrarySection: String, CaseIterable {
+    case workouts = "Workouts"
+    case exercises = "Exercises"
+}
+
 struct VideoLibraryView: View {
     @StateObject private var viewModel = VideoLibraryViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedWorkout: Workout?
     @State private var showPaywall = false
+    @State private var librarySection: VideoLibrarySection = .workouts
     
     var isPremium: Bool {
         authViewModel.currentUser?.subscriptionStatus == .premium
@@ -17,31 +23,38 @@ struct VideoLibraryView: View {
                 Color(hex: "#F5F5F7")
                     .ignoresSafeArea()
                 
-                if viewModel.isLoading && viewModel.workouts.isEmpty {
+                if viewModel.isLoading && viewModel.workouts.isEmpty && viewModel.exercises.isEmpty {
                     loadingView
                 } else {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            // Search Bar
-                            searchBar
-                            
-                            // Category Filters
-                            categoryFilters
-                            
-                            // Difficulty Filter
-                            difficultyFilter
-                            
-                            // View Toggle
-                            viewToggle
-                            
-                            // Workouts Grid/List
-                            if viewModel.filteredWorkouts.isEmpty {
-                                emptyStateView
-                            } else {
-                                workoutsSection
+                    VStack(spacing: 0) {
+                        Picker("Section", selection: $librarySection) {
+                            ForEach(VideoLibrarySection.allCases, id: \.self) { section in
+                                Text(section.rawValue).tag(section)
                             }
                         }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, 20)
                         .padding(.top, 8)
+                        .padding(.bottom, 12)
+                        
+                        if librarySection == .exercises {
+                            ExerciseLibraryView(exercises: viewModel.exercises, showDismissButton: false)
+                        } else {
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    searchBar
+                                    categoryFilters
+                                    difficultyFilter
+                                    viewToggle
+                                    if viewModel.filteredWorkouts.isEmpty {
+                                        emptyStateView
+                                    } else {
+                                        workoutsSection
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                        }
                     }
                 }
             }
@@ -52,7 +65,7 @@ struct VideoLibraryView: View {
             }
             .onAppear {
                 AnalyticsService.shared.trackScreenView("VideoLibrary", screenClass: "VideoLibraryView")
-                if viewModel.workouts.isEmpty {
+                if viewModel.workouts.isEmpty && viewModel.exercises.isEmpty {
                     Task {
                         await viewModel.fetchWorkouts(userId: authViewModel.currentUser?.id)
                     }
@@ -267,7 +280,7 @@ struct VideoLibraryView: View {
         VStack {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("Loading workouts...")
+            Text("Loading...")
                 .font(.system(size: 16))
                 .foregroundColor(.secondary)
                 .padding(.top, 16)

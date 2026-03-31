@@ -25,6 +25,23 @@ struct NewOnboardingPage: Identifiable {
     ]
 }
 
+// MARK: - Onboarding Step
+
+enum OnboardingStep: Int, CaseIterable {
+    case intro = 0
+    case gender = 1
+    case age = 2
+    case weight = 3
+    case height = 4
+    case activityLevel = 5
+    case physicalLimitations = 6
+    case activityInterests = 7
+    case goals = 8
+    case mealPreferences = 9
+    
+    static var count: Int { allCases.count }
+}
+
 // MARK: - Gender Selection
 
 enum Gender: String, Codable, CaseIterable {

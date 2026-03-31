@@ -4,3 +4,9 @@ GoogleService-Info.plist
 *.xcuserstate
 *.xcuserdata/
 .DS_Store
+
+# Local secrets and environment (never commit)
+.env
+**/.env
+**/secrets/
+**/*serviceAccount*.json

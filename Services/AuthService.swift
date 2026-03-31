@@ -131,7 +131,7 @@ class AuthService: ObservableObject {
     
     // MARK: - Fetch User Data
     private func fetchUserData(userId: String) async throws -> User {
-        let document = try await db.collection("users").document(userId).getDocument()
+        let document = try await db.collection(FirestoreCollections.users).document(userId).getDocument()
         
         guard let data = document.data() else {
             currentUser = nil
@@ -150,7 +150,7 @@ class AuthService: ObservableObject {
 
     /// Get existing user or create Firestore document for new users (e.g. Google/Phone).
     private func getOrCreateUserData(userId: String, email: String, name: String) async throws -> User {
-        let document = try await db.collection("users").document(userId).getDocument()
+        let document = try await db.collection(FirestoreCollections.users).document(userId).getDocument()
         if let data = document.data(),
            let user = try? Firestore.Decoder().decode(User.self, from: data) {
             currentUser = user
@@ -170,7 +170,7 @@ class AuthService: ObservableObject {
     // MARK: - Save User Data
     private func saveUserData(_ user: User) async throws {
         let data = try Firestore.Encoder().encode(user)
-        try await db.collection("users").document(user.id).setData(data)
+        try await db.collection(FirestoreCollections.users).document(user.id).setData(data)
     }
     
     // MARK: - Get Current Auth User
@@ -192,41 +192,41 @@ class AuthService: ObservableObject {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
         var data: [String: Any] = [
-            "updatedAt": Timestamp(date: Date())
+            FirestoreFields.updatedAt: Timestamp(date: Date())
         ]
 
         if let gender = details.gender {
-            data["gender"] = gender.rawValue
+            data[FirestoreFields.gender] = gender.rawValue
         }
         if let age = details.age {
-            data["age"] = age
+            data[FirestoreFields.age] = age
         }
         if let w = details.weight {
             let kg = details.weightUnit == .kg ? w : details.weightUnit.convert(w, to: .kg)
-            data["weight"] = kg
+            data[FirestoreFields.weight] = kg
         }
         if let heightCm = details.height {
-            data["height"] = heightCm
+            data[FirestoreFields.height] = heightCm
         }
         if let goal = details.fitnessGoal {
-            data["fitnessGoal"] = goal.rawValue
+            data[FirestoreFields.fitnessGoal] = goal.rawValue
         }
         if let level = details.activityLevel {
-            data["activityLevel"] = level.rawValue
+            data[FirestoreFields.activityLevel] = level.rawValue
         }
         if !details.physicalLimitations.isEmpty {
-            data["physicalLimitations"] = details.physicalLimitations
+            data[FirestoreFields.physicalLimitations] = details.physicalLimitations
         }
         if !details.interestedActivities.isEmpty {
-            data["interestedActivities"] = details.interestedActivities
+            data[FirestoreFields.interestedActivities] = details.interestedActivities
         }
         if let meal = details.mealPreference {
-            data["mealPreference"] = meal.rawValue
+            data[FirestoreFields.mealPreference] = meal.rawValue
         }
-        data["heightUnitPreference"] = details.heightUnit.rawValue
-        data["weightUnitPreference"] = details.weightUnit.rawValue
+        data[FirestoreFields.heightUnitPreference] = details.heightUnit.rawValue
+        data[FirestoreFields.weightUnitPreference] = details.weightUnit.rawValue
 
-        try await db.collection("users").document(uid).setData(data, merge: true)
+        try await db.collection(FirestoreCollections.users).document(uid).setData(data, merge: true)
         _ = try await fetchUserData(userId: uid)
     }
 

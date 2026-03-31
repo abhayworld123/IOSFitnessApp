@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 class VideoLibraryViewModel: ObservableObject {
     @Published var workouts: [Workout] = []
+    @Published var exercises: [Exercise] = []
     @Published var filteredWorkouts: [Workout] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -23,6 +24,7 @@ class VideoLibraryViewModel: ObservableObject {
         errorMessage = nil
         
         do {
+            async let mergedExercises: [Exercise] = workoutService.fetchAllExercisesMerged()
             var all: [Workout] = try await workoutService.fetchTemplateWorkouts()
             if let userId = userId, !userId.isEmpty {
                 let userWorkouts = try await workoutService.fetchUserWorkouts(userId: userId)
@@ -30,6 +32,7 @@ class VideoLibraryViewModel: ObservableObject {
                 all = all + userWorkouts.filter { !templateIds.contains($0.id) }
             }
             workouts = all
+            exercises = await mergedExercises
             applyFilters()
         } catch {
             errorMessage = "Failed to load workouts. Please try again."

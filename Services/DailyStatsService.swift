@@ -6,14 +6,13 @@ class DailyStatsService: ObservableObject {
     static let shared = DailyStatsService()
 
     private let db = Firestore.firestore()
-    private let dailyStatsCollection = "dailyStats"
 
     private init() {}
 
     // MARK: - Save (merge so we don't overwrite other fields)
 
     func saveDailyStats(userId: String, stats: UserDailyStats) async throws {
-        let ref = db.collection("users").document(userId).collection(dailyStatsCollection).document(stats.dateString)
+        let ref = db.collection(FirestoreCollections.users).document(userId).collection(FirestoreCollections.dailyStats).document(stats.dateString)
         var data: [String: Any] = [
             "dateString": stats.dateString,
             "date": Timestamp(date: stats.date),
@@ -21,11 +20,11 @@ class DailyStatsService: ObservableObject {
             "stepsGoal": stats.stepsGoal,
             "sleep": stats.sleep,
             "sleepGoal": stats.sleepGoal,
-            "createdAt": Timestamp(date: stats.createdAt),
-            "updatedAt": Timestamp(date: Date())
+            FirestoreFields.createdAt: Timestamp(date: stats.createdAt),
+            FirestoreFields.updatedAt: Timestamp(date: Date())
         ]
         if let weight = stats.weight {
-            data["weight"] = weight
+            data[FirestoreFields.weight] = weight
         }
         try await ref.setData(data, merge: true)
     }
@@ -34,7 +33,7 @@ class DailyStatsService: ObservableObject {
     func saveTodayStats(userId: String, steps: Int? = nil, stepsGoal: Int? = nil, sleep: Double? = nil, sleepGoal: Double? = nil, weight: Double? = nil) async throws {
         let now = Date()
         let dateString = UserDailyStats.dateString(for: now)
-        let ref = db.collection("users").document(userId).collection(dailyStatsCollection).document(dateString)
+        let ref = db.collection(FirestoreCollections.users).document(userId).collection(FirestoreCollections.dailyStats).document(dateString)
 
         var stats: UserDailyStats
         if let existing = try await fetchDailyStats(userId: userId, date: now) {
@@ -63,7 +62,7 @@ class DailyStatsService: ObservableObject {
 
     func fetchDailyStats(userId: String, date: Date) async throws -> UserDailyStats? {
         let dateString = UserDailyStats.dateString(for: date)
-        let ref = db.collection("users").document(userId).collection(dailyStatsCollection).document(dateString)
+        let ref = db.collection(FirestoreCollections.users).document(userId).collection(FirestoreCollections.dailyStats).document(dateString)
         let snap = try await ref.getDocument()
         guard snap.exists, let d = snap.data() else { return nil }
         return decodeDailyStats(from: d, dateString: dateString)
@@ -76,7 +75,7 @@ class DailyStatsService: ObservableObject {
         let start = cal.startOfDay(for: startDate)
         let end = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: endDate))!
 
-        let snapshot = try await db.collection("users").document(userId).collection(dailyStatsCollection)
+        let snapshot = try await db.collection(FirestoreCollections.users).document(userId).collection(FirestoreCollections.dailyStats)
             .whereField("date", isGreaterThanOrEqualTo: Timestamp(date: start))
             .whereField("date", isLessThan: Timestamp(date: end))
             .order(by: "date", descending: false)
@@ -88,11 +87,11 @@ class DailyStatsService: ObservableObject {
             if let date = data["date"] as? Timestamp {
                 data["date"] = date.dateValue()
             }
-            if let createdAt = data["createdAt"] as? Timestamp {
-                data["createdAt"] = createdAt.dateValue()
+            if let createdAt = data[FirestoreFields.createdAt] as? Timestamp {
+                data[FirestoreFields.createdAt] = createdAt.dateValue()
             }
-            if let updatedAt = data["updatedAt"] as? Timestamp {
-                data["updatedAt"] = updatedAt.dateValue()
+            if let updatedAt = data[FirestoreFields.updatedAt] as? Timestamp {
+                data[FirestoreFields.updatedAt] = updatedAt.dateValue()
             }
             if let stats = decodeDailyStats(from: data, dateString: doc.documentID) {
                 result.append(stats)
@@ -119,11 +118,11 @@ class DailyStatsService: ObservableObject {
         if let date = d["date"] as? Timestamp {
             d["date"] = date.dateValue()
         }
-        if let createdAt = d["createdAt"] as? Timestamp {
-            d["createdAt"] = createdAt.dateValue()
+        if let createdAt = d[FirestoreFields.createdAt] as? Timestamp {
+            d[FirestoreFields.createdAt] = createdAt.dateValue()
         }
-        if let updatedAt = d["updatedAt"] as? Timestamp {
-            d["updatedAt"] = updatedAt.dateValue()
+        if let updatedAt = d[FirestoreFields.updatedAt] as? Timestamp {
+            d[FirestoreFields.updatedAt] = updatedAt.dateValue()
         }
         return try? Firestore.Decoder().decode(UserDailyStats.self, from: d)
     }

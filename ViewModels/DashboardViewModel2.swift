@@ -6,7 +6,7 @@ import FirebaseFirestore
 class DashboardViewModel2: ObservableObject {
     @Published var streakData: StreakData
     @Published var dailyMetrics: DailyMetrics
-    @Published var howToWorkouts: [Workout] = []
+    @Published var howToExercises: [Exercise] = []
     @Published var userWorkouts: [Workout] = []
     @Published var exercises: [Exercise] = []
     @Published var isLoading = false
@@ -32,6 +32,13 @@ class DashboardViewModel2: ObservableObject {
             iconName: "sparkles",
             iconColor: Color(hex: "#AF52DE"),
             action: .customPlan
+        ),
+        WorkoutQuickAction(
+            title: "My Exercises",
+            subtitle: "Browse exercise library",
+            iconName: "figure.run",
+            iconColor: Color(hex: "#34C759"),
+            action: .myExercises
         )
     ]
     
@@ -54,8 +61,8 @@ class DashboardViewModel2: ObservableObject {
             dailyMetrics = DashboardViewModel2.generateMockDailyMetrics()
         }
         
-        await fetchHowToWorkouts()
         await fetchExercisesFromFirebase()
+        await fetchHowToExercises()
         
         if let userId = userId {
             await fetchUserWorkouts(userId: userId)
@@ -78,8 +85,8 @@ class DashboardViewModel2: ObservableObject {
             }
             
             // 2. User profile (weight)
-            let userDoc = try? await db.collection("users").document(userId).getDocument()
-            if let data = userDoc?.data(), let weight = data["weight"] as? Double {
+            let userDoc = try? await db.collection(FirestoreCollections.users).document(userId).getDocument()
+            if let data = userDoc?.data(), let weight = data[FirestoreFields.weight] as? Double {
                 metrics.weight.current = weight
                 if let target = data["targetWeight"] as? Double {
                     metrics.weight.target = target
@@ -99,9 +106,9 @@ class DashboardViewModel2: ObservableObject {
             }
             
             // 3. Completion dates from userProgress for streak
-            let snapshot = try? await db.collection("userProgress")
+            let snapshot = try? await db.collection(FirestoreCollections.userProgress)
                 .document(userId)
-                .collection("completedWorkouts")
+                .collection(FirestoreFields.completedWorkouts)
                 .getDocuments()
             
             var completionDates: [Date] = []
@@ -164,10 +171,8 @@ class DashboardViewModel2: ObservableObject {
         return streak
     }
     
-    func fetchHowToWorkouts() async {
-        if let workouts = try? await workoutService.fetchTemplateWorkouts() {
-            howToWorkouts = Array(workouts.prefix(5))
-        }
+    func fetchHowToExercises() async {
+        howToExercises = Array(exercises.prefix(5))
     }
     
     func fetchUserWorkouts(userId: String?) async {
@@ -185,12 +190,7 @@ class DashboardViewModel2: ObservableObject {
     }
     
     func fetchExercisesFromFirebase() async {
-        do {
-            exercises = try await workoutService.fetchAllExercises()
-        } catch {
-            print("Error fetching exercises from Firebase: \(error.localizedDescription)")
-            exercises = []
-        }
+        exercises = await workoutService.fetchAllExercisesMerged()
     }
     
     // MARK: - Update Methods
@@ -198,9 +198,45 @@ class DashboardViewModel2: ObservableObject {
     func toggleDayCompletion(dayId: String) {
         if let index = streakData.weeklyActivities.firstIndex(where: { $0.id == dayId }) {
             streakData.weeklyActivities[index].isCompleted.toggle()
-            // TODO: Save to Firebase
+            let isCompleted = streakData.weeklyActivities[index].isCompleted
+            let date = streakData.weeklyActivities[index].date
+            
+            Task { [weak self] in
+                guard let self = self else { return }
+                guard let userId = self.authService.getCurrentAuthUser()?.uid else { return }
+                let dateString = Self.dateFormatter.string(from: date)
+                let docRef = self.db.collection(FirestoreCollections.userProgress)
+                    .document(userId)
+                    .collection(FirestoreFields.completedWorkouts)
+                    .document(dateString)
+                
+                do {
+                    if isCompleted {
+                        try await docRef.setData([
+                            "completed": true,
+                            "completedDate": Timestamp(date: date),
+                            "lastUpdated": Timestamp(date: Date())
+                        ], merge: true)
+                    } else {
+                        try await docRef.delete()
+                    }
+                    
+                    let newStreak = self.calculateStreak(from: self.streakData.weeklyActivities.filter { $0.isCompleted }.map { $0.date })
+                    await MainActor.run {
+                        self.streakData.currentStreak = newStreak
+                    }
+                } catch {
+                    print("Error saving streak: \(error.localizedDescription)")
+                }
+            }
         }
     }
+    
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
     
     func updateWater(glasses: Int) {
         dailyMetrics.water.current = max(0, dailyMetrics.water.current + glasses)
@@ -240,9 +276,9 @@ class DashboardViewModel2: ObservableObject {
         persistDailyStats(weight: weight)
         Task {
             guard let userId = authService.getCurrentAuthUser()?.uid else { return }
-            try? await db.collection("users").document(userId).updateData([
-                "weight": weight,
-                "updatedAt": Timestamp(date: Date())
+            try? await db.collection(FirestoreCollections.users).document(userId).updateData([
+                FirestoreFields.weight: weight,
+                FirestoreFields.updatedAt: Timestamp(date: Date())
             ])
         }
     }

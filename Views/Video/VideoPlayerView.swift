@@ -116,7 +116,7 @@ struct VideoPlayerView: View {
                     .overlay(
                         // Controls Overlay
                         Group {
-                            if viewModel.showControls {
+                            if viewModel.showControls && !viewModel.isLoading {
                                 VideoControlsView(viewModel: viewModel)
                                     .transition(.opacity)
                             }
@@ -158,11 +158,7 @@ struct VideoPlayerView: View {
                                         .multilineTextAlignment(.center)
                                     
                                     Button("Retry") {
-                                        if let videoURL = VideoService.shared.getVideoURL(from: workout.videoURL) {
-                                            viewModel.loadVideo(url: videoURL)
-                                        } else if let sampleURL = VideoService.getSampleVideoURL() {
-                                            viewModel.loadVideo(url: sampleURL)
-                                        }
+                                        viewModel.setupPlayer()
                                     }
                                     .buttonStyle(.borderedProminent)
                                 }
@@ -271,8 +267,8 @@ struct VideoPlayerView: View {
         .navigationBarHidden(true)
         .onAppear {
             Task {
-                await viewModel.loadProgress()
                 await loadExercises()
+                await viewModel.loadProgress()
             }
             startControlsTimer()
             setupBackgroundNotifications()
@@ -401,13 +397,32 @@ struct VideoPlayerView: View {
     // MARK: - Load Exercises
     
     private func loadExercises() async {
-        guard !workout.exercises.isEmpty else { return }
-        
-        do {
-            exercises = try await WorkoutService.shared.fetchExercises(ids: workout.exercises)
-        } catch {
-            print("Failed to load exercises: \(error)")
+        guard !workout.exercises.isEmpty else {
+            // No exercises to resolve hero media from; fall back to the workout video configuration.
+            viewModel.setHeroMediaURLString(nil)
+            return
         }
+        exercises = await WorkoutService.shared.fetchExercisesMerged(ids: workout.exercises)
+
+        // Hero video source: use exercise media (merged exercise catalog), not `Workout.videoURL`.
+        let heroAnimation = exercises
+            .compactMap { $0.animationURL }
+            .first(where: { isDirectVideoURLString($0) })
+        
+        if let heroAnimation {
+            viewModel.setHeroMediaURLString(heroAnimation)
+        } else {
+            // No direct-video media available from exercise catalog; fall back to workout video config.
+            viewModel.setHeroMediaURLString(nil)
+        }
+    }
+
+    private func isDirectVideoURLString(_ string: String) -> Bool {
+        let lower = string.lowercased()
+        let pathPart = lower.split(separator: "?").first.map(String.init) ?? lower
+        let ext = [".mp4", ".webm", ".mov", ".m4v"]
+        if ext.contains(where: { pathPart.hasSuffix($0) }) { return true }
+        return ext.contains { lower.contains($0) }
     }
     
     // MARK: - Background Notifications

@@ -54,6 +54,7 @@ struct ExerciseDataService {
             let muscleGroups: [String]
             let difficultyLevel: String
             let videoURL: String?
+            let thumbnailURL: String?
             let instructions: [String]
             let category: String? // Not used in Exercise model, but present in JSON
         }
@@ -87,6 +88,7 @@ struct ExerciseDataService {
                 duration: jsonExercise.duration,
                 restTime: jsonExercise.restTime,
                 animationURL: jsonExercise.videoURL, // Map videoURL to animationURL
+                thumbnailURL: jsonExercise.thumbnailURL,
                 muscleGroups: muscleGroups,
                 difficultyLevel: difficulty,
                 instructions: jsonExercise.instructions,

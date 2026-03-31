@@ -19,6 +19,7 @@ struct StreakCardView: View {
                         .font(.system(size: 14))
                         .foregroundColor(Color(hex: "#FF9500"))
                 }
+                .accessibilityLabel("View workout streak calendar")
             }
             .padding(.horizontal, 20)
             

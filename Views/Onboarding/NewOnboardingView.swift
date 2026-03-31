@@ -7,7 +7,7 @@ struct NewOnboardingView: View {
     @State private var basicDetails = BasicDetailsData()
     
     private let pages = NewOnboardingPage.pages
-    private let totalPages = 10 // Screen 1 (intro) + Screen 2 (gender) + Screen 3 (age) + Screen 4 (weight) + Screen 5 (height) + Screen 6 (activity) + Screen 7 (physical limitations) + Screen 8 (activity interests) + Screen 9 (goals) + Screen 10 (meal preferences)
+    private let totalPages = OnboardingStep.count
     
     var body: some View {
         ZStack {

@@ -34,7 +34,7 @@ final class WeightTrackingViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let doc = try await db.collection("users").document(userId).getDocument()
+            let doc = try await db.collection(FirestoreCollections.users).document(userId).getDocument()
             let data = doc.data() ?? [:]
 
             if let g = data["targetWeight"] as? Double {
@@ -43,7 +43,7 @@ final class WeightTrackingViewModel: ObservableObject {
                 goalWeightKg = nil
             }
 
-            if let wKg = data["weight"] as? Double, wKg > 0 {
+            if let wKg = data[FirestoreFields.weight] as? Double, wKg > 0 {
                 rulerValue = WeightUnit.kg.convert(wKg, to: displayUnit)
             } else {
                 rulerValue = displayUnit.defaultValue
@@ -74,9 +74,9 @@ final class WeightTrackingViewModel: ObservableObject {
     func persistWeightKg(_ kg: Double) async {
         do {
             try await dailyStatsService.saveTodayStats(userId: userId, weight: kg)
-            try await db.collection("users").document(userId).updateData([
-                "weight": kg,
-                "updatedAt": Timestamp(date: Date())
+            try await db.collection(FirestoreCollections.users).document(userId).updateData([
+                FirestoreFields.weight: kg,
+                FirestoreFields.updatedAt: Timestamp(date: Date())
             ])
             try? await refreshHistory()
             NotificationCenter.default.post(name: NSNotification.Name("WeightLogged"), object: nil)
@@ -88,9 +88,9 @@ final class WeightTrackingViewModel: ObservableObject {
     func saveGoalKg(_ kg: Double) async {
         goalWeightKg = kg
         do {
-            try await db.collection("users").document(userId).updateData([
+            try await db.collection(FirestoreCollections.users).document(userId).updateData([
                 "targetWeight": kg,
-                "updatedAt": Timestamp(date: Date())
+                FirestoreFields.updatedAt: Timestamp(date: Date())
             ])
             NotificationCenter.default.post(name: NSNotification.Name("WeightLogged"), object: nil)
         } catch {

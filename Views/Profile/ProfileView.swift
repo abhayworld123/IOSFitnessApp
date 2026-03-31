@@ -17,6 +17,9 @@ struct ProfileView: View {
     @State private var showNotificationSettings = false
     @State private var showPrivacyPolicy = false
     @State private var showTermsOfService = false
+    #if DEBUG
+    @State private var showSeedData = false
+    #endif
     @State private var showNewDashboard = false
     @State private var showNewOnboarding = false
     
@@ -76,6 +79,7 @@ struct ProfileView: View {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(profileTextPrimary)
+                            .accessibilityLabel("Profile options")
                     }
                 }
             }
@@ -98,6 +102,11 @@ struct ProfileView: View {
         .sheet(isPresented: $showTermsOfService) {
             TermsOfServiceView()
         }
+        #if DEBUG
+        .sheet(isPresented: $showSeedData) {
+            DataSeedingView()
+        }
+        #endif
         .fullScreenCover(isPresented: $showNewDashboard) {
             NewDashboardView()
                 .environmentObject(authViewModel)
@@ -135,6 +144,7 @@ struct ProfileView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                 }
+                .accessibilityLabel("Profile photo for \(authViewModel.currentUser?.name ?? "User")")
                 VStack(alignment: .leading, spacing: 4) {
                     Text(authViewModel.currentUser?.name ?? "User")
                         .font(.system(size: 20, weight: .bold))
@@ -172,6 +182,8 @@ struct ProfileView: View {
                 .font(.system(size: 12))
                 .foregroundColor(profileTextSecondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
         .frame(maxWidth: .infinity)
     }
     
@@ -290,6 +302,7 @@ struct ProfileView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .accessibilityHint("Opens \(title)")
     }
     
     private func profileListRow(title: String, action: @escaping () -> Void) -> some View {
@@ -312,6 +325,7 @@ struct ProfileView: View {
             .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
+        .accessibilityHint("Opens \(title)")
     }
     
     private var profileListDivider: some View {
@@ -382,6 +396,12 @@ struct ProfileView: View {
                 showNotificationSettings = true
             }
             profileListDivider
+            #if DEBUG
+            bottomSettingsRow(icon: "square.and.arrow.down.fill", iconColor: profileAccentOrange, title: "Seed Firestore data") {
+                showSeedData = true
+            }
+            profileListDivider
+            #endif
             bottomSettingsRow(icon: "lock.shield.fill", iconColor: profileAccentOrange, title: "Privacy Policy") {
                 showPrivacyPolicy = true
             }
@@ -413,6 +433,7 @@ struct ProfileView: View {
             .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
+        .accessibilityHint("Opens \(title)")
     }
     
     // MARK: - Loading
@@ -426,236 +447,6 @@ struct ProfileView: View {
                 .foregroundColor(profileTextSecondary)
                 .padding(.top, 16)
         }
-    }
-}
-
-// MARK: - Edit Profile View (unchanged)
-
-struct EditProfileView: View {
-    @Environment(\.dismiss) var dismiss
-    @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @StateObject private var viewModel = ProfileViewModel()
-    @State private var name: String = ""
-    @State private var email: String = ""
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                AppConstants.Colors.background(colorScheme: colorScheme)
-                    .ignoresSafeArea()
-                
-                Form {
-                    Section {
-                        TextField("Name", text: $name)
-                            .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-                        
-                        TextField("Email", text: $email)
-                            .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                    } header: {
-                        Text("Profile Information")
-                    }
-                }
-                .scrollContentBackground(.hidden)
-            }
-            .navigationTitle("Edit Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        Task {
-                            await saveProfile()
-                        }
-                    }
-                    .disabled(isLoading || name.isEmpty || email.isEmpty)
-                }
-            }
-            .onAppear {
-                name = authViewModel.currentUser?.name ?? ""
-                email = authViewModel.currentUser?.email ?? ""
-            }
-        }
-    }
-    
-    private func saveProfile() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            try await viewModel.updateProfile(name: name, email: email)
-            await authViewModel.checkAuthenticationStatus()
-            dismiss()
-            HapticFeedback.success()
-        } catch {
-            errorMessage = error.localizedDescription
-            HapticFeedback.error()
-        }
-        
-        isLoading = false
-    }
-}
-
-// MARK: - Reusable components (kept for other views that use them)
-
-struct StatCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let color: Color
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 28))
-                .foregroundColor(color)
-            Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(AppConstants.Colors.cardBackground(colorScheme: colorScheme))
-        .cornerRadius(AppConstants.Design.cornerRadius)
-    }
-}
-
-struct RecentWorkoutRow: View {
-    let item: WorkoutHistoryItem
-    @State private var workout: Workout?
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            if let thumbnailURL = item.workout.thumbnailURL, !thumbnailURL.isEmpty {
-                AsyncImage(url: URL(string: thumbnailURL)) { phase in
-                    switch phase {
-                    case .empty:
-                        Rectangle()
-                            .fill(AppConstants.Colors.cardBackground(colorScheme: colorScheme))
-                            .frame(width: 60, height: 60)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 60, height: 60)
-                            .clipped()
-                    case .failure:
-                        Rectangle()
-                            .fill(AppConstants.Colors.cardBackground(colorScheme: colorScheme))
-                            .frame(width: 60, height: 60)
-                    @unknown default:
-                        Rectangle()
-                            .fill(AppConstants.Colors.cardBackground(colorScheme: colorScheme))
-                            .frame(width: 60, height: 60)
-                    }
-                }
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                AppConstants.Colors.primary,
-                                AppConstants.Colors.secondary
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 60, height: 60)
-                    .cornerRadius(8)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.workout.title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-                    .lineLimit(1)
-                Text(formatDate(item.completedDate))
-                    .font(.system(size: 14))
-                    .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14))
-                .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
-        }
-        .padding()
-        .background(AppConstants.Colors.cardBackground(colorScheme: colorScheme))
-        .cornerRadius(AppConstants.Design.cornerRadius)
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
-    }
-}
-
-struct SettingsRow: View {
-    let icon: String
-    let title: String
-    let color: Color
-    let action: () -> Void
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(color)
-                    .frame(width: 24)
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
-            }
-            .padding()
-        }
-    }
-}
-
-struct ThemeToggleRow: View {
-    @ObservedObject private var themeManager = ThemeManager.shared
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "paintbrush.fill")
-                .font(.system(size: 20))
-                .foregroundColor(AppConstants.Colors.primary)
-                .frame(width: 24)
-            Text("Theme")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-            Spacer()
-            Picker("Theme", selection: $themeManager.currentTheme) {
-                ForEach(AppTheme.allCases, id: \.self) { theme in
-                    Text(theme.displayName).tag(theme)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(AppConstants.Colors.primary)
-        }
-        .padding()
     }
 }
 

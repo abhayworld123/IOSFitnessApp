@@ -6,8 +6,6 @@ class WorkoutPlanService: ObservableObject {
     static let shared = WorkoutPlanService()
     
     private let db = Firestore.firestore()
-    private let workoutPlansCollection = "workoutPlans"
-    private let workoutsCollection = "workouts"
     
     private init() {}
     
@@ -21,19 +19,19 @@ class WorkoutPlanService: ObservableObject {
         
         var data = try Firestore.Encoder().encode(plan)
         // Ensure timestamps are set
-        data["createdAt"] = Timestamp(date: plan.createdAt)
-        data["updatedAt"] = Timestamp(date: plan.updatedAt)
+        data[FirestoreFields.createdAt] = Timestamp(date: plan.createdAt)
+        data[FirestoreFields.updatedAt] = Timestamp(date: plan.updatedAt)
         if let startDate = plan.startDate {
             data["startDate"] = Timestamp(date: startDate)
         }
         
         // Save plan
-        try await db.collection(workoutPlansCollection).document(plan.id).setData(data)
+        try await db.collection(FirestoreCollections.workoutPlans).document(plan.id).setData(data)
         
         // Update user's currentWorkoutPlanId
-        try await db.collection("users").document(plan.userId).updateData([
-            "currentWorkoutPlanId": plan.id,
-            "updatedAt": Timestamp(date: Date())
+        try await db.collection(FirestoreCollections.users).document(plan.userId).updateData([
+            FirestoreFields.currentWorkoutPlanId: plan.id,
+            FirestoreFields.updatedAt: Timestamp(date: Date())
         ])
     }
     
@@ -43,10 +41,10 @@ class WorkoutPlanService: ObservableObject {
         }
         
         // First try to get plan from user's currentWorkoutPlanId
-        let userDoc = try await db.collection("users").document(userId).getDocument()
+        let userDoc = try await db.collection(FirestoreCollections.users).document(userId).getDocument()
         if let userData = userDoc.data(),
-           let planId = userData["currentWorkoutPlanId"] as? String {
-            let planDoc = try await db.collection(workoutPlansCollection).document(planId).getDocument()
+           let planId = userData[FirestoreFields.currentWorkoutPlanId] as? String {
+            let planDoc = try await db.collection(FirestoreCollections.workoutPlans).document(planId).getDocument()
             if let planData = planDoc.data(),
                let plan = try? Firestore.Decoder().decode(WorkoutPlan.self, from: planData),
                plan.isActive {
@@ -55,10 +53,10 @@ class WorkoutPlanService: ObservableObject {
         }
         
         // Fallback: search for active plan by userId
-        let snapshot = try await db.collection(workoutPlansCollection)
-            .whereField("userId", isEqualTo: userId)
+        let snapshot = try await db.collection(FirestoreCollections.workoutPlans)
+            .whereField(FirestoreFields.userId, isEqualTo: userId)
             .whereField("isActive", isEqualTo: true)
-            .order(by: "createdAt", descending: true)
+            .order(by: FirestoreFields.createdAt, descending: true)
             .limit(to: 1)
             .getDocuments()
         
@@ -68,14 +66,14 @@ class WorkoutPlanService: ObservableObject {
     
     func updatePlan(_ plan: WorkoutPlan) async throws {
         var data = try Firestore.Encoder().encode(plan)
-        data["updatedAt"] = Timestamp(date: Date())
-        try await db.collection(workoutPlansCollection).document(plan.id).updateData(data)
+        data[FirestoreFields.updatedAt] = Timestamp(date: Date())
+        try await db.collection(FirestoreCollections.workoutPlans).document(plan.id).updateData(data)
     }
     
     func deactivatePlan(planId: String) async throws {
-        try await db.collection(workoutPlansCollection).document(planId).updateData([
+        try await db.collection(FirestoreCollections.workoutPlans).document(planId).updateData([
             "isActive": false,
-            "updatedAt": Timestamp(date: Date())
+            FirestoreFields.updatedAt: Timestamp(date: Date())
         ])
     }
     
@@ -138,7 +136,7 @@ class WorkoutPlanService: ObservableObject {
     // MARK: - Helper Methods
     
     private func fetchAvailableWorkouts() async throws -> [Workout] {
-        let snapshot = try await db.collection(workoutsCollection)
+        let snapshot = try await db.collection(FirestoreCollections.workouts)
             .getDocuments()
         
         var workouts: [Workout] = []
@@ -288,7 +286,7 @@ class WorkoutPlanService: ObservableObject {
     // MARK: - Progress Tracking
     
     func markWorkoutComplete(planId: String, dayId: String) async throws {
-        let planRef = db.collection(workoutPlansCollection).document(planId)
+        let planRef = db.collection(FirestoreCollections.workoutPlans).document(planId)
         let planDoc = try await planRef.getDocument()
         
         guard var plan = try? Firestore.Decoder().decode(WorkoutPlan.self, from: planDoc.data() ?? [:]) else {

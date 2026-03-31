@@ -156,7 +156,7 @@ struct UserWorkoutDetailView: View {
                     .foregroundColor(Color(hex: "#8E8E93"))
                     .padding(.vertical, 20)
             } else {
-                VStack(spacing: 0) {
+                LazyVStack(spacing: 0) {
                     ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
                         SetLogExerciseRow(
                             exercise: exercise,
@@ -227,7 +227,7 @@ struct UserWorkoutDetailView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(Color(hex: "#1C1C1E"))
             
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
                 ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
                     SuggestedPlanRow(
                         exercise: exercise,
@@ -308,53 +308,13 @@ struct UserWorkoutDetailView: View {
             isLoading = false
             return
         }
-        
-        do {
-            // Try to fetch from Firebase first
-            var fetchedExercises = try await workoutService.fetchExercises(ids: currentWorkout.exercises)
-            
-            // If some exercises are missing from Firebase, try loading from JSON
-            if fetchedExercises.count < currentWorkout.exercises.count {
-                print("Some exercises not found in Firebase, trying JSON fallback...")
-                let jsonExercises = try ExerciseDataService.loadExercisesFromJSON()
-                
-                // Create a dictionary for quick lookup
-                let jsonExerciseDict = Dictionary(uniqueKeysWithValues: jsonExercises.map { ($0.id, $0) })
-                
-                // Fill in missing exercises from JSON
-                var allExercises: [Exercise] = []
-                for exerciseId in currentWorkout.exercises {
-                    if let firebaseExercise = fetchedExercises.first(where: { $0.id == exerciseId }) {
-                        allExercises.append(firebaseExercise)
-                    } else if let jsonExercise = jsonExerciseDict[exerciseId] {
-                        allExercises.append(jsonExercise)
-                        print("Found exercise \(exerciseId) in JSON")
-                    } else {
-                        print("Exercise \(exerciseId) not found in Firebase or JSON")
-                    }
-                }
-                
-                exercises = allExercises
-            } else {
-                exercises = fetchedExercises
-            }
-        } catch {
-            // If Firebase fetch fails, try JSON as fallback
-            print("Firebase fetch failed, trying JSON fallback: \(error.localizedDescription)")
-            do {
-                let jsonExercises = try ExerciseDataService.loadExercisesFromJSON()
-                let jsonExerciseDict = Dictionary(uniqueKeysWithValues: jsonExercises.map { ($0.id, $0) })
-                
-                exercises = currentWorkout.exercises.compactMap { exerciseId in
-                    jsonExerciseDict[exerciseId]
-                }
-            } catch {
-                errorMessage = "Failed to load exercises. Please try again."
-                print("Error loading exercises from JSON: \(error.localizedDescription)")
-            }
+
+        exercises = await workoutService.fetchExercisesMerged(ids: currentWorkout.exercises)
+
+        if exercises.isEmpty {
+            errorMessage = "Failed to load exercises. Please try again."
         }
-        
-        print("Loaded \(exercises.count) exercises out of \(currentWorkout.exercises.count) expected")
+
         isLoading = false
     }
     

@@ -28,22 +28,11 @@ class CreateWorkoutViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            // Try to load from JSON file first
-            allExercises = try ExerciseDataService.loadExercisesFromJSON()
-            filteredExercises = allExercises
-        } catch {
-            // Fallback to Firebase if JSON loading fails
-            do {
-                allExercises = try await workoutService.fetchAllExercises()
-                filteredExercises = allExercises
-            } catch {
-                errorMessage = "Failed to load exercises. Please try again."
-                print("Error fetching exercises: \(error.localizedDescription)")
-                // Fallback to empty array if both fail
-                allExercises = []
-                filteredExercises = []
-            }
+        allExercises = await workoutService.fetchAllExercisesMerged()
+        filteredExercises = allExercises
+        
+        if allExercises.isEmpty {
+            errorMessage = "Failed to load exercises. Please try again."
         }
         
         isLoading = false

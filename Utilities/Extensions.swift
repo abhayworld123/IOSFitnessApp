@@ -45,7 +45,10 @@ extension String {
     }
     
     var isValidPassword: Bool {
-        return self.count >= 6
+        let minLength = 8
+        let hasUppercase = self.contains(where: { $0.isUppercase })
+        let hasNumber = self.contains(where: { $0.isNumber })
+        return self.count >= minLength && hasUppercase && hasNumber
     }
     
     var isValidName: Bool {

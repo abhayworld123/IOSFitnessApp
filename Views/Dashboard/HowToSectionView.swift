@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct HowToSectionView: View {
-    let workouts: [Workout]
-    let onWorkoutTap: (Workout) -> Void
+    let exercises: [Exercise]
+    let onExerciseTap: (Exercise) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -13,9 +13,9 @@ struct HowToSectionView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(workouts) { workout in
-                        HowToWorkoutCard(workout: workout) {
-                            onWorkoutTap(workout)
+                    ForEach(exercises) { exercise in
+                        HowToExerciseCard(exercise: exercise) {
+                            onExerciseTap(exercise)
                         }
                     }
                 }
@@ -25,45 +25,53 @@ struct HowToSectionView: View {
     }
 }
 
-struct HowToWorkoutCard: View {
-    let workout: Workout
+struct HowToExerciseCard: View {
+    let exercise: Exercise
     let onTap: () -> Void
+
+    private var placeholderGradient: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        AppConstants.Colors.primary,
+                        AppConstants.Colors.secondary
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+
+    private var thumbnailLayer: some View {
+        Group {
+            if let s = exercise.thumbnailURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !s.isEmpty,
+               let url = URL(string: s) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        placeholderGradient
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholderGradient
+                    @unknown default:
+                        placeholderGradient
+                    }
+                }
+            } else {
+                placeholderGradient
+            }
+        }
+    }
     
     var body: some View {
         Button(action: onTap) {
             ZStack(alignment: .topLeading) {
-                // Thumbnail
-                if let thumbnailURL = workout.thumbnailURL, !thumbnailURL.isEmpty {
-                    AsyncImage(url: URL(string: thumbnailURL)) { phase in
-                        switch phase {
-                        case .empty:
-                            Rectangle()
-                                .fill(Color(hex: "#E5E5EA"))
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure:
-                            Rectangle()
-                                .fill(Color(hex: "#E5E5EA"))
-                        @unknown default:
-                            Rectangle()
-                                .fill(Color(hex: "#E5E5EA"))
-                        }
-                    }
-                } else {
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    AppConstants.Colors.primary,
-                                    AppConstants.Colors.secondary
-                                ]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
+                thumbnailLayer
                 
                 // Gradient Overlay
                 LinearGradient(
@@ -79,7 +87,7 @@ struct HowToWorkoutCard: View {
                 VStack {
                     HStack {
                         // Difficulty Badge
-                        Text(workout.difficulty.rawValue.capitalized)
+                        Text(exercise.difficultyLevel.displayName)
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
@@ -95,7 +103,7 @@ struct HowToWorkoutCard: View {
                     
                     // Title and Play Button
                     HStack {
-                        Text(workout.title)
+                        Text(exercise.name)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(2)
@@ -111,16 +119,19 @@ struct HowToWorkoutCard: View {
                 }
             }
             .frame(width: 240, height: 140)
+            .clipped()
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(exercise.name)
+        .accessibilityHint("Opens exercise details")
     }
 }
 
 #Preview {
     HowToSectionView(
-        workouts: [],
-        onWorkoutTap: { _ in }
+        exercises: [],
+        onExerciseTap: { _ in }
     )
     .background(Color(hex: "#F5F5F7"))
     .previewLayout(.sizeThatFits)

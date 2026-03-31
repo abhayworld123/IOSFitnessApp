@@ -108,6 +108,8 @@ struct TabBarButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

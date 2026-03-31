@@ -42,9 +42,9 @@ class ProfileViewModel: ObservableObject {
         
         do {
             // Fetch completed workouts
-            let completedWorkoutsSnapshot = try await db.collection("userProgress")
+            let completedWorkoutsSnapshot = try await db.collection(FirestoreCollections.userProgress)
                 .document(userId)
-                .collection("completedWorkouts")
+                .collection(FirestoreFields.completedWorkouts)
                 .getDocuments()
             
             var completedWorkoutIds: [String] = []
@@ -228,10 +228,10 @@ class ProfileViewModel: ObservableObject {
             throw ProfileError.notAuthenticated
         }
         
-        try await db.collection("users").document(userId).updateData([
-            "name": name,
-            "email": email,
-            "updatedAt": Timestamp(date: Date())
+        try await db.collection(FirestoreCollections.users).document(userId).updateData([
+            FirestoreFields.name: name,
+            FirestoreFields.email: email,
+            FirestoreFields.updatedAt: Timestamp(date: Date())
         ])
         
         // Refresh user data

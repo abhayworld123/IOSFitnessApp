@@ -5,12 +5,15 @@ struct NewDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedWorkout: Workout?
     @State private var selectedUserWorkout: Workout?
+    @State private var selectedExercise: Exercise?
     @State private var showPaywall = false
     @State private var showCreateWorkout = false
     @State private var showUserWorkoutDetail = false
     @State private var showWaterTracking = false
     @State private var showStepsTracking = false
     @State private var showWeightTracking = false
+    @State private var showPlanGenerator = false
+    @State private var showExerciseLibrary = false
     
     var userName: String {
         authViewModel.currentUser?.name ?? "User"
@@ -42,9 +45,9 @@ struct NewDashboardView: View {
                     }
                     
                     // How To Section
-                    if !viewModel.howToWorkouts.isEmpty {
-                        HowToSectionView(workouts: viewModel.howToWorkouts) { workout in
-                            handleWorkoutTap(workout)
+                    if !viewModel.howToExercises.isEmpty {
+                        HowToSectionView(exercises: viewModel.howToExercises) { exercise in
+                            selectedExercise = exercise
                         }
                     }
                     
@@ -87,6 +90,7 @@ struct NewDashboardView: View {
             .refreshable {
                 await viewModel.fetchDashboardData(userId: authViewModel.currentUser?.id)
             }
+            .accessibilityHint("Pull down to refresh dashboard data")
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -130,6 +134,9 @@ struct NewDashboardView: View {
                 VideoPlayerView(workout: workout)
             }
         }
+        .fullScreenCover(item: $selectedExercise) { exercise in
+            ExerciseDetailView(exercise: exercise, workout: nil)
+        }
         .fullScreenCover(isPresented: $showCreateWorkout) {
             CreateWorkoutView()
         }
@@ -159,6 +166,17 @@ struct NewDashboardView: View {
                 WeightTrackingView(userId: userId)
             } else {
                 EmptyView()
+            }
+        }
+        .sheet(isPresented: $showPlanGenerator) {
+            NavigationStack {
+                PlanGeneratorView()
+                    .environmentObject(authViewModel)
+            }
+        }
+        .sheet(isPresented: $showExerciseLibrary) {
+            NavigationStack {
+                ExerciseLibraryView(exercises: viewModel.exercises)
             }
         }
         .onChange(of: showWeightTracking) { _, isPresented in
@@ -201,14 +219,12 @@ struct NewDashboardView: View {
             HapticFeedback.impact()
             
         case .customPlan:
-            // TODO: Navigate to custom plan generator
+            showPlanGenerator = true
             HapticFeedback.impact()
-            print("Custom Plan tapped")
             
         case .myExercises:
-            // TODO: Navigate to exercises list
+            showExerciseLibrary = true
             HapticFeedback.impact()
-            print("My Exercises tapped")
         }
     }
 }

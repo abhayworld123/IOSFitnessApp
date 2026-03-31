@@ -146,6 +146,8 @@ struct UserWorkoutRow: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(workout.title)
+        .accessibilityHint("Opens workout details")
     }
 }
 

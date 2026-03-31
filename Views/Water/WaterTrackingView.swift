@@ -6,6 +6,8 @@ struct WaterTrackingView: View {
     @StateObject private var viewModel: WaterTrackingViewModel
     @State private var showEditGoal = false
     @State private var showReminderSheet = false
+    @State private var showDatePicker = false
+    @State private var selectedDate = Date()
     
     init(userId: String) {
         self.userId = userId
@@ -49,10 +51,38 @@ struct WaterTrackingView: View {
         }
         .navigationBarHidden(true)
         .task {
+            selectedDate = viewModel.selectedDate
             await viewModel.loadData()
             if viewModel.needsGoalSetup {
                 showEditGoal = true
             }
+        }
+        .sheet(isPresented: $showDatePicker) {
+            NavigationStack {
+                DatePicker(
+                    "Select Date",
+                    selection: $selectedDate,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .padding()
+                .navigationTitle("Select Date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            showDatePicker = false
+                            viewModel.selectedDate = selectedDate
+                            Task {
+                                await viewModel.loadData()
+                            }
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .sheet(isPresented: $showEditGoal) {
             WaterGoalEditSheet(
@@ -157,6 +187,8 @@ struct WaterTrackingView: View {
                 }
                 .foregroundColor(.primary)
             }
+            .accessibilityLabel("Go back")
+            .accessibilityHint("Returns to previous screen")
             
             Spacer()
             
@@ -168,16 +200,19 @@ struct WaterTrackingView: View {
             
             // Date selector
             Button(action: {
-                // TODO: Show date picker
+                selectedDate = viewModel.selectedDate
+                showDatePicker = true
             }) {
                 HStack(spacing: 4) {
-                    Text("Today")
+                    Text(isToday(selectedDate) ? "Today" : formattedDate(selectedDate))
                         .font(.system(size: 16, weight: .medium))
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(.primary)
             }
+            .accessibilityLabel("Select date")
+            .accessibilityHint("Opens date picker to view water intake for different days")
         }
     }
     
@@ -258,12 +293,14 @@ struct WaterTrackingView: View {
                     .background(Color(hex: "#E5E5EA"))
                     .clipShape(Circle())
             }
+            .accessibilityLabel("Remove one glass of water")
             
             // Current glasses
             Text("\(viewModel.currentIntake?.glassesConsumed ?? 0)")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(Color(hex: "#1C1C1E"))
                 .frame(minWidth: 48, alignment: .center)
+                .accessibilityLabel("\(viewModel.currentIntake?.glassesConsumed ?? 0) glasses consumed")
             
             // Plus button
             Button(action: {
@@ -276,6 +313,7 @@ struct WaterTrackingView: View {
                     .background(Color(hex: "#E5E5EA"))
                     .clipShape(Circle())
             }
+            .accessibilityLabel("Add one glass of water")
         }
         .frame(maxWidth: .infinity)
     }
@@ -350,6 +388,8 @@ struct WaterTrackingView: View {
                         .foregroundColor(.white)
                 }
             }
+            .accessibilityLabel("Set water reminders")
+            .accessibilityHint("Configure when to get reminded to drink water")
             
             VStack(spacing: 4) {
                 Text("Set Reminder")
@@ -377,6 +417,16 @@ struct WaterTrackingView: View {
         }
         let count = reminder.reminderTimes.count
         return count == 1 ? "1 reminder daily" : "\(count) reminders daily"
+    }
+
+    private func isToday(_ date: Date) -> Bool {
+        Calendar.current.isDateInToday(date)
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
     }
 }
 

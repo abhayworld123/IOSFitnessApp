@@ -14,9 +14,9 @@ class NotificationService: ObservableObject {
     // MARK: - Fetch Notifications
     
     func fetchNotifications(userId: String) async throws -> [Notification] {
-        let snapshot = try await db.collection("users")
+        let snapshot = try await db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .order(by: "timestamp", descending: true)
             .getDocuments()
         
@@ -39,9 +39,9 @@ class NotificationService: ObservableObject {
     func startListening(userId: String, onUpdate: @escaping ([Notification]) -> Void) {
         stopListening() // Remove existing listener if any
         
-        listener = db.collection("users")
+        listener = db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .order(by: "timestamp", descending: true)
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else {
@@ -75,17 +75,17 @@ class NotificationService: ObservableObject {
     // MARK: - Mark as Read
     
     func markAsRead(notificationId: String, userId: String) async throws {
-        try await db.collection("users")
+        try await db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .document(notificationId)
             .updateData(["isRead": true])
     }
     
     func markAllAsRead(userId: String) async throws {
-        let snapshot = try await db.collection("users")
+        let snapshot = try await db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .whereField("isRead", isEqualTo: false)
             .getDocuments()
         
@@ -100,9 +100,9 @@ class NotificationService: ObservableObject {
     // MARK: - Delete Notification
     
     func deleteNotification(notificationId: String, userId: String) async throws {
-        try await db.collection("users")
+        try await db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .document(notificationId)
             .delete()
     }
@@ -113,9 +113,9 @@ class NotificationService: ObservableObject {
         var data = try Firestore.Encoder().encode(notification)
         // Convert Date to Firestore Timestamp
         data["timestamp"] = Timestamp(date: notification.timestamp)
-        try await db.collection("users")
+        try await db.collection(FirestoreCollections.users)
             .document(userId)
-            .collection("notifications")
+            .collection(FirestoreCollections.notifications)
             .document(notification.id)
             .setData(data)
     }
@@ -165,9 +165,9 @@ class NotificationService: ObservableObject {
         for notification in sampleNotifications {
             var data = try Firestore.Encoder().encode(notification)
             data["timestamp"] = Timestamp(date: notification.timestamp)
-            let ref = db.collection("users")
+            let ref = db.collection(FirestoreCollections.users)
                 .document(userId)
-                .collection("notifications")
+                .collection(FirestoreCollections.notifications)
                 .document(notification.id)
             batch.setData(data, forDocument: ref)
         }
