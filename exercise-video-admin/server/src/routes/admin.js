@@ -5,15 +5,177 @@ import {
   assertObjectExists,
   buildObjectKey,
   buildThumbnailObjectKey,
+  buildCategoryImageObjectKey,
   guessContentType,
   presignPut,
   publicUrlForKey,
 } from '../r2.js';
 import { parseHttpsUrl, fetchUrlToR2 } from '../importUrl.js';
 import { docToExercise } from '../serialize.js';
+import {
+  readAiCoachSettingsFromFirestore,
+  patchAiCoachSettings,
+} from '../aiCoachService.js';
+import {
+  listCategories,
+  getCategory,
+  createCategory,
+  patchCategory,
+  seedMissingDefaults,
+  setCategoryImageURL,
+} from '../categoryService.js';
 
 const router = Router();
 const col = () => firestore().collection(config.exercisesCollection);
+
+router.get('/settings/ai-coach', async (_req, res) => {
+  try {
+    const merged = await readAiCoachSettingsFromFirestore();
+    res.json({
+      settings: merged,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Load failed' });
+  }
+});
+
+router.patch('/settings/ai-coach', async (req, res) => {
+  try {
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    const merged = await patchAiCoachSettings(body);
+    res.json({ settings: merged });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Save failed' });
+  }
+});
+
+// --- Categories (workout home cards, activity chips, video library filters)
+
+router.get('/categories', async (req, res) => {
+  try {
+    const placement = typeof req.query.placement === 'string' ? req.query.placement : undefined;
+    const categories = await listCategories({ placement });
+    res.json({ categories });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'List failed' });
+  }
+});
+
+router.post('/categories', async (req, res) => {
+  try {
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    const category = await createCategory(body);
+    res.status(201).json(category);
+  } catch (e) {
+    console.error(e);
+    const status = e.status || 500;
+    res.status(status).json({ error: e.message || 'Create failed' });
+  }
+});
+
+router.post('/categories/seed', async (_req, res) => {
+  try {
+    const result = await seedMissingDefaults();
+    const categories = await listCategories();
+    res.json({ ...result, categories });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Seed failed' });
+  }
+});
+
+router.get('/categories/:id', async (req, res) => {
+  try {
+    const cat = await getCategory(req.params.id);
+    if (!cat) return res.status(404).json({ error: 'Not found' });
+    res.json(cat);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Get failed' });
+  }
+});
+
+router.patch('/categories/:id', async (req, res) => {
+  try {
+    const body = (req.body && typeof req.body === 'object') ? req.body : {};
+    const updated = await patchCategory(req.params.id, body);
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    const status = e.status || 500;
+    res.status(status).json({ error: e.message || 'Patch failed' });
+  }
+});
+
+router.post('/categories/:id/image/presign', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cat = await getCategory(id);
+    if (!cat) return res.status(404).json({ error: 'Not found' });
+    const filename = (req.body && req.body.filename) || 'image.png';
+    const contentType = (req.body && req.body.contentType) || guessContentType(filename);
+    const key = buildCategoryImageObjectKey(id, filename);
+    const signed = await presignPut(key, contentType);
+    res.json(signed);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'Presign failed' });
+  }
+});
+
+router.post('/categories/:id/image/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = req.body && req.body.key;
+    if (!key || typeof key !== 'string') {
+      return res.status(400).json({ error: 'key required' });
+    }
+    const prefix = `categories/${id}/images/`;
+    if (!key.startsWith(prefix)) {
+      return res.status(400).json({ error: 'Invalid key for category' });
+    }
+    await assertObjectExists(key);
+    const url = publicUrlForKey(key);
+    const category = await setCategoryImageURL(id, url);
+    res.json({ imageURL: url, category });
+  } catch (e) {
+    console.error(e);
+    const status = e.status || 500;
+    res.status(status).json({ error: e.message || 'Complete failed' });
+  }
+});
+
+router.post('/categories/:id/image/import-url', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cat = await getCategory(id);
+    if (!cat) return res.status(404).json({ error: 'Not found' });
+    const url = parseHttpsUrl(req.body && req.body.url);
+    const fn = filenameFromUrlPath(url.pathname, 'image.png');
+    const key = buildCategoryImageObjectKey(id, fn);
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), IMAGE_IMPORT_TIMEOUT_MS);
+    try {
+      const { publicUrl } = await fetchUrlToR2(url, {
+        maxBytes: MAX_IMAGE_IMPORT_BYTES,
+        kind: 'image',
+        key,
+        signal: ac.signal,
+      });
+      const category = await setCategoryImageURL(id, publicUrl);
+      res.json({ imageURL: publicUrl, category });
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (e) {
+    console.error(e);
+    const msg = e.name === 'AbortError' ? 'Import timed out' : e.message || 'Import failed';
+    res.status(500).json({ error: msg });
+  }
+});
 
 router.get('/exercises', async (_req, res) => {
   try {

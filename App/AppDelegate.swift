@@ -33,6 +33,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) {
         #if !targetEnvironment(simulator)
         guard !deviceToken.isEmpty else { return }
+        Task { @MainActor in
+            PushNotificationService.shared.handleAPNSToken(deviceToken)
+        }
         // Defer to avoid running in early-startup contexts.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             Auth.auth().setAPNSToken(deviceToken, type: self.apnsTokenType)
@@ -49,6 +52,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             completionHandler(.noData)
             return
         }
-        completionHandler(.noData)
+        Task { @MainActor in
+            PushNotificationService.shared.handleRemoteNotification(userInfo)
+        }
+        completionHandler(.newData)
     }
 }

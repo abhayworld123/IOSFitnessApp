@@ -33,6 +33,12 @@ struct ExerciseLogView: View {
             
             if viewModel.isLoading && viewModel.savedSets.isEmpty {
                 ProgressView()
+            } else if viewModel.initialLoadFailed {
+                LoadFailureFallbackView(
+                    message: viewModel.errorMessage ?? "Failed to load exercise logs.",
+                    onRetry: { Task { await viewModel.loadLogs() } },
+                    onGoBack: { dismiss() }
+                )
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {

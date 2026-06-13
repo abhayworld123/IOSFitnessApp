@@ -4,9 +4,23 @@ GoogleService-Info.plist
 *.xcuserstate
 *.xcuserdata/
 .DS_Store
-
+.*PLAN.md
+.*PORT_PLAN.md
+**/*.PORT_PLAN.md
 # Local secrets and environment (never commit)
 .env
 **/.env
 **/secrets/
 **/*serviceAccount*.json
+KOTLIN_ANDROID_PORT_PLAN.md
+REACT_NATIVE_PORT_PLAN.md
+.cursor/plans/fitnessapp_rn_port_plan_9612fbe4.plan.md
+exercise-video-admin/.env.example
+exercise-video-admin/web/.env.local
+**/.env.local
+**/.env.example
+exercise-video-admin/.env.example
+exercise-video-admin/SETUP.md
+exercise-video-admin/SETUP.md
+exercise-video-admin/.env.example
+exercise-video-admin/.env.example

@@ -75,10 +75,10 @@ class DailyStatsService: ObservableObject {
         let start = cal.startOfDay(for: startDate)
         let end = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: endDate))!
 
-        let snapshot = try await db.collection(FirestoreCollections.users).document(userId).collection(FirestoreCollections.dailyStats)
-            .whereField("date", isGreaterThanOrEqualTo: Timestamp(date: start))
-            .whereField("date", isLessThan: Timestamp(date: end))
-            .order(by: "date", descending: false)
+        // List user's daily docs and filter by date locally (no composite index).
+        let snapshot = try await db.collection(FirestoreCollections.users)
+            .document(userId)
+            .collection(FirestoreCollections.dailyStats)
             .getDocuments()
 
         var result: [UserDailyStats] = []
@@ -93,11 +93,12 @@ class DailyStatsService: ObservableObject {
             if let updatedAt = data[FirestoreFields.updatedAt] as? Timestamp {
                 data[FirestoreFields.updatedAt] = updatedAt.dateValue()
             }
-            if let stats = decodeDailyStats(from: data, dateString: doc.documentID) {
+            guard let stats = decodeDailyStats(from: data, dateString: doc.documentID) else { continue }
+            if stats.date >= start && stats.date < end {
                 result.append(stats)
             }
         }
-        return result
+        return result.sorted { $0.date < $1.date }
     }
 
     /// Days with a non-nil weight, sorted by date ascending (for charts).

@@ -30,16 +30,23 @@ struct NewOnboardingPage: Identifiable {
 enum OnboardingStep: Int, CaseIterable {
     case intro = 0
     case gender = 1
-    case age = 2
-    case weight = 3
-    case height = 4
-    case activityLevel = 5
-    case physicalLimitations = 6
-    case activityInterests = 7
-    case goals = 8
-    case mealPreferences = 9
+    case vitals = 2
+    case activityLevel = 3
+    case physicalLimitations = 4
+    case activityInterests = 5
+    case goals = 6
+    case mealPreferences = 7
     
     static var count: Int { allCases.count }
+}
+
+/// Optional onboarding fields cleared when the user taps Skip on that step.
+enum OnboardingClearedField: Hashable {
+    case activityLevel
+    case physicalLimitations
+    case interestedActivities
+    case fitnessGoal
+    case mealPreference
 }
 
 // MARK: - Gender Selection

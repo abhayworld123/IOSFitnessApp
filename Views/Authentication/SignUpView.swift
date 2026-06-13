@@ -46,12 +46,14 @@ struct SignUpView: View {
                     }
                     .padding(.horizontal, 24)
                     
-                    // App Logo/Title
+                    // App Logo
                     VStack(spacing: 12) {
-                        Image(systemName: "figure.run")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 10)
+                        AppLogoView(style: .wordmark, maxWidth: 220)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.95))
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
                         
                         Text("Create Account")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -135,8 +137,8 @@ struct SignUpView: View {
                                         )
                                 )
                             
-                            if !password.isEmpty && !password.isValidPassword {
-                                Text("Password must be at least 6 characters")
+                            if let passwordError = passwordValidationMessage {
+                                Text(passwordError)
                                     .font(.system(size: 12))
                                     .foregroundColor(AppConstants.Colors.error)
                                     .padding(.leading, 4)
@@ -315,6 +317,11 @@ struct SignUpView: View {
         password.isValidPassword &&
         confirmPassword == password &&
         !confirmPassword.isEmpty
+    }
+
+    private var passwordValidationMessage: String? {
+        guard !password.isEmpty else { return nil }
+        return password.passwordValidationError
     }
 }
 

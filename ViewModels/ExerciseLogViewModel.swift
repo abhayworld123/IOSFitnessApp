@@ -11,6 +11,8 @@ class ExerciseLogViewModel: ObservableObject {
     @Published var savedLog: ExerciseLog?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    /// True when the initial Firestore load failed (save errors still use `errorMessage` only).
+    @Published var initialLoadFailed: Bool = false
     @Published var selectedTab: LogTab = .sets
     
     private let exerciseLogService = ExerciseLogService.shared
@@ -30,6 +32,7 @@ class ExerciseLogViewModel: ObservableObject {
     func loadLogs() async {
         isLoading = true
         errorMessage = nil
+        initialLoadFailed = false
         
         do {
             let log = try await exerciseLogService.fetchExerciseLog(
@@ -42,6 +45,7 @@ class ExerciseLogViewModel: ObservableObject {
             savedSets = log?.sets ?? []
         } catch {
             errorMessage = "Failed to load exercise logs: \(error.localizedDescription)"
+            initialLoadFailed = true
         }
         
         isLoading = false

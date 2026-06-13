@@ -8,6 +8,10 @@ struct WaterTrackingView: View {
     @State private var showReminderSheet = false
     @State private var showDatePicker = false
     @State private var selectedDate = Date()
+
+    private let screenBg = Color(hex: "#F2F2F2")
+    private let accentBlue = Color(hex: "#6BB6FF")
+    private let accentOrange = Color(hex: "#EE8924")
     
     init(userId: String) {
         self.userId = userId
@@ -16,36 +20,37 @@ struct WaterTrackingView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color(hex: "#F5F5F7")
-                .ignoresSafeArea()
-            
+            screenBg.ignoresSafeArea()
+
             if viewModel.isLoading {
                 ProgressView()
+            } else if let err = viewModel.errorMessage {
+                LoadFailureFallbackView(
+                    message: err,
+                    onRetry: {
+                        Task { await viewModel.loadData() }
+                    },
+                    onGoBack: { dismiss() }
+                )
             } else {
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // Navigation Header
+                    VStack(spacing: 20) {
                         navigationHeader
-                        
-                        // Empty state when no water logged today
-                        if (viewModel.currentIntake?.glassesConsumed ?? 0) == 0 {
-                            waterEmptyState
+
+                        if viewModel.isEmptyTrackingState {
+                            emptyWaterGoalCard
+                            auraEmptyStateCard
+                        } else {
+                            waterGoalCard
+                            reminderCard
+                            aiOptimizedCard
+                            supplementAdviceCard
                         }
-                        
-                        // Water Goal Card
-                        waterGoalCard
-                        
-                        // Analysis Card
-                        analysisCard
-                        
-                        // Set Reminder Card
-                        reminderCard
-                        
+
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, 12)
                 }
             }
         }
@@ -53,9 +58,6 @@ struct WaterTrackingView: View {
         .task {
             selectedDate = viewModel.selectedDate
             await viewModel.loadData()
-            if viewModel.needsGoalSetup {
-                showEditGoal = true
-            }
         }
         .sheet(isPresented: $showDatePicker) {
             NavigationStack {
@@ -121,11 +123,6 @@ struct WaterTrackingView: View {
                 }
             }
         }
-        .onChange(of: viewModel.needsGoalSetup) { _, need in
-            if need && !viewModel.isLoading {
-                showEditGoal = true
-            }
-        }
     }
 
     // MARK: - Goal Reached Toast
@@ -143,274 +140,469 @@ struct WaterTrackingView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: viewModel.showGoalReachedToast)
     }
 
-    // MARK: - Empty State
-
-    private var waterEmptyState: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color(hex: "#007AFF").opacity(0.12))
-                    .frame(width: 88, height: 88)
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(Color(hex: "#007AFF"))
-            }
-            Text("No water logged yet")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
-            Text("Tap the + button below to log your first glass and start your daily goal.")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color(hex: "#8E8E93"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-        .padding(.horizontal, 20)
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-    }
-    
     // MARK: - Navigation Header
-    
+
     private var navigationHeader: some View {
-        HStack {
-            Button(action: {
-                dismiss()
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .medium))
-                    Text("Back")
-                        .font(.system(size: 16, weight: .medium))
+        VStack(spacing: 10) {
+            HStack {
+                Button(action: { dismiss() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("Back")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
+                .accessibilityLabel("Go back")
+
+                Spacer()
+
+                Text("Water")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color(hex: "#1C1C1E"))
+
+                Spacer()
+
+                Color.clear.frame(width: 72, height: 1)
             }
-            .accessibilityLabel("Go back")
-            .accessibilityHint("Returns to previous screen")
-            
-            Spacer()
-            
-            Text("Water")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
-            
-            Spacer()
-            
-            // Date selector
-            Button(action: {
+
+            Button {
                 selectedDate = viewModel.selectedDate
                 showDatePicker = true
-            }) {
-                HStack(spacing: 4) {
-                    Text(isToday(selectedDate) ? "Today" : formattedDate(selectedDate))
-                        .font(.system(size: 16, weight: .medium))
+            } label: {
+                HStack(spacing: 6) {
+                    Text(isToday(viewModel.selectedDate) ? "Today" : formattedDate(viewModel.selectedDate))
+                        .font(.system(size: 15, weight: .semibold))
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 11, weight: .semibold))
                 }
-                .foregroundColor(.primary)
+                .foregroundColor(Color(hex: "#1C1C1E"))
             }
             .accessibilityLabel("Select date")
             .accessibilityHint("Opens date picker to view water intake for different days")
         }
     }
-    
-    // MARK: - Water Goal Card
-    
-    private var waterGoalCard: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Header with Goal and Edit
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.goal <= 0 ? "Set your daily water goal" : "Goal: \(viewModel.goal) Glasses")
+
+    // MARK: - Empty state (new user / no history)
+
+    private var emptyWaterGoalCard: some View {
+        let displayGoal = viewModel.displayGoal
+        let glassMl = viewModel.glassSize >= 100 ? viewModel.glassSize : WaterTrackingViewModel.defaultGlassSizeMl
+
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Goal: \(displayGoal) Glasses")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Color(hex: "#1C1C1E"))
-                    
-                    Text("1 Glass: \(viewModel.glassSize) ml")
-                        .font(.system(size: 14, weight: .regular))
+
+                    Text("1 Glass: \(glassMl) ml")
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(Color(hex: "#8E8E93"))
                 }
-                
-                Spacer()
-                
-                Button(action: {
-                    showEditGoal = true
-                }) {
+
+                Spacer(minLength: 12)
+
+                Button { showEditGoal = true } label: {
                     Image(systemName: "pencil")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundColor(Color(hex: "#1C1C1E"))
-                        .frame(width: 32, height: 32)
-                        .background(Color(hex: "#F5F5F7"))
+                        .frame(width: 36, height: 36)
+                        .background(Color(hex: "#F2F2F7"))
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Edit water goal")
             }
-            
-            // Water Glass Icon
-            HStack {
-                Spacer()
-                WaterGlassIcon(
-                    progress: viewModel.currentIntake?.progress ?? 0.0,
-                    size: 114
-                )
-                Spacer()
+
+            VStack(spacing: 16) {
+                ZStack {
+                    WaterProgressRing(progress: 0, diameter: 208, lineWidth: 14, fill: accentBlue)
+
+                    VStack(spacing: 10) {
+                        WaterGlassIcon(progress: 0, size: 78, showsOuterStroke: false)
+
+                        Text("0")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundColor(Color(hex: "#1C1C1E"))
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+
+                VStack(spacing: 8) {
+                    Text("Start tracking your hydration")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(Color(hex: "#1C1C1E"))
+                        .multilineTextAlignment(.center)
+
+                    Text("Stay energized and improve recovery by tracking your daily water intake")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color(hex: "#8E8E93"))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+
+                VStack(spacing: 12) {
+                    Button {
+                        viewModel.ensureDefaultGoalIfNeeded()
+                        viewModel.incrementGlass()
+                    } label: {
+                        Text("Drink a glass")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(accentBlue)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .accessibilityLabel("Log one glass of water")
+
+                    Button {
+                        showEditGoal = true
+                    } label: {
+                        Text("Set daily goal")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1C1C1E"))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color(hex: "#D1D1D6"), lineWidth: 1.5)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .accessibilityLabel("Set your daily water goal")
+                }
             }
-            
-            // Counter
-            glassCounter
-            
-            // Progress Message
-            let message = viewModel.progressMessage
-            VStack(spacing: 4) {
-                Text(message.title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "#1C1C1E"))
-                
-                Text(message.subtitle)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(Color(hex: "#8E8E93"))
-            }
-            .frame(maxWidth: .infinity)
         }
         .padding(20)
         .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
-    
-    // MARK: - Glass Counter
-    
-    private var glassCounter: some View {
-        HStack(spacing: 16) {
-            // Minus button
-            Button(action: {
-                viewModel.decrementGlass()
-            }) {
-                Image(systemName: "minus")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1C1C1E"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#E5E5EA"))
-                    .clipShape(Circle())
+
+    private var auraEmptyStateCard: some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(AppConstants.TrakkitAI.iconBox)
+                    .frame(width: 48, height: 48)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(.white)
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Aura says:")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppConstants.TrakkitAI.title)
+                Text("“Even small sips add up. Let’s start with one glass.”")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(AppConstants.TrakkitAI.body)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [
+                    AppConstants.TrakkitAI.rowGradientTop,
+                    AppConstants.TrakkitAI.cardFill
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(AppConstants.TrakkitAI.cardBorder.opacity(0.85), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    // MARK: - Water Goal Card
+
+    private var waterGoalCard: some View {
+        let ringProgress = waterRingProgress
+        let consumed = viewModel.currentIntake?.glassesConsumed ?? 0
+        let goal = max(viewModel.goal, 0)
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(goal <= 0 ? "Set your daily goal" : "Goal: \(goal) Glasses")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(Color(hex: "#1C1C1E"))
+
+                    Text("1 Glass: \(viewModel.glassSize) ml")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "#8E8E93"))
+                }
+
+                Spacer(minLength: 12)
+
+                Button { showEditGoal = true } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(Color(hex: "#1C1C1E"))
+                        .frame(width: 36, height: 36)
+                        .background(Color(hex: "#F2F2F7"))
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Edit water goal")
+            }
+
+            VStack(spacing: 14) {
+                ZStack {
+                    WaterProgressRing(progress: ringProgress, diameter: 208, lineWidth: 14, fill: accentBlue)
+
+                    VStack(spacing: 10) {
+                        WaterGlassIcon(
+                            progress: ringProgress,
+                            size: 78,
+                            showsOuterStroke: false
+                        )
+
+                        if goal <= 0 {
+                            Text("Tap pencil to set goal")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#8E8E93"))
+                                .multilineTextAlignment(.center)
+                        } else {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text("\(consumed)")
+                                    .font(.system(size: 40, weight: .bold))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                                Text("/\(goal) glasses")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(Color(hex: "#8E8E93"))
+                            }
+                            .accessibilityLabel("\(consumed) of \(goal) glasses")
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+
+                if goal > 0 {
+                    Text("\(Int(round(ringProgress * 100)))% OF YOUR DAILY TARGET")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.6)
+                        .foregroundColor(Color(hex: "#34C759"))
+                        .frame(maxWidth: .infinity)
+                }
+
+                drinkControlsRow
+            }
+        }
+        .padding(20)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    private var waterRingProgress: Double {
+        guard viewModel.goal > 0 else { return 0 }
+        return viewModel.currentIntake?.progress ?? 0
+    }
+
+    private var drinkControlsRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                viewModel.decrementGlass()
+            } label: {
+                Image(systemName: "minus")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(accentBlue)
+                    .frame(width: 52, height: 52)
+                    .background(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(accentBlue, lineWidth: 2)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .disabled((viewModel.currentIntake?.glassesConsumed ?? 0) <= 0)
             .accessibilityLabel("Remove one glass of water")
-            
-            // Current glasses
-            Text("\(viewModel.currentIntake?.glassesConsumed ?? 0)")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
-                .frame(minWidth: 48, alignment: .center)
-                .accessibilityLabel("\(viewModel.currentIntake?.glassesConsumed ?? 0) glasses consumed")
-            
-            // Plus button
-            Button(action: {
-                viewModel.incrementGlass()
-            }) {
-                Image(systemName: "plus")
+
+            Button {
+                if viewModel.goal <= 0 {
+                    showEditGoal = true
+                } else {
+                    viewModel.incrementGlass()
+                }
+            } label: {
+                Text("Drink a glass")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1C1C1E"))
-                    .frame(width: 44, height: 44)
-                    .background(Color(hex: "#E5E5EA"))
-                    .clipShape(Circle())
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(accentBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .accessibilityLabel("Add one glass of water")
         }
-        .frame(maxWidth: .infinity)
     }
-    
-    // MARK: - Analysis Card
-    
-    private var analysisCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Analysis")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
-            
-            Text("Last 7 days")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color(hex: "#8E8E93"))
-            
-            // Bar Chart
-            waterBarChart
-        }
-        .padding(20)
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-    }
-    
-    // MARK: - Water Bar Chart
-    
-    private var waterBarChart: some View {
-        VStack(spacing: 12) {
-            // Bars
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(0..<7) { index in
-                    VStack(spacing: 8) {
-                        let glasses = viewModel.getIntakeForDay(index)
-                        let maxGlasses = max(viewModel.goal, viewModel.weeklyData.map { $0.glassesConsumed }.max() ?? 12)
-                        let barHeight = maxGlasses > 0 ? CGFloat(glasses) / CGFloat(maxGlasses) * 100 : 0
-                        
-                        // Bar
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(glasses > 0 ? Color(hex: "#FF9500") : Color(hex: "#E5E5EA"))
-                            .frame(width: 32, height: max(barHeight, 4))
-                        
-                        // Day label
-                        Text(dayLabel(for: index))
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color(hex: "#8E8E93"))
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .frame(height: 120)
-        }
-    }
-    
-    private func dayLabel(for index: Int) -> String {
-        let days = ["M", "T", "W", "T", "F", "S", "S"]
-        return days[index]
-    }
-    
+
     // MARK: - Reminder Card
-    
+
     private var reminderCard: some View {
-        VStack(spacing: 12) {
-            Button(action: { showReminderSheet = true }) {
+        Button {
+            showReminderSheet = true
+        } label: {
+            HStack(alignment: .center, spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(Color(hex: "#FF9500"))
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: viewModel.reminder?.isEnabled == true ? "bell.fill" : "bell.badge")
-                        .font(.system(size: 24, weight: .semibold))
+                        .fill(accentOrange)
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.white)
                 }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Set Reminder")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(Color(hex: "#1C1C1E"))
+
+                    Text(reminderSubtitle)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color(hex: "#8E8E93"))
+                }
+
+                Spacer(minLength: 0)
             }
-            .accessibilityLabel("Set water reminders")
-            .accessibilityHint("Configure when to get reminded to drink water")
-            
-            VStack(spacing: 4) {
-                Text("Set Reminder")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "#1C1C1E"))
-                
-                Text(reminderSubtitle)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(Color(hex: "#8E8E93"))
+            .padding(18)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Set water reminders")
+        .accessibilityHint("Configure when to get reminded to drink water")
+    }
+
+    // MARK: - AI suggestion (static copy; goal bump uses glass size)
+
+    private var aiOptimizedCard: some View {
+        let activityMl = 250
+        let weatherMl = 100
+        let totalMl = activityMl + weatherMl
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("AI OPTIMIZED")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color(hex: "#34C759"))
+            .clipShape(Capsule())
+
+            Text("Today's Optimal Goal")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+
+            Text("Based on your HIIT workout and local temperature (28°C), we've adjusted your goal by +\(totalMl)mL.")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(.white.opacity(0.92))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(alignment: .bottom, spacing: 10) {
+                aiBreakdownChip(title: "Activity", value: "+\(activityMl)mL")
+                aiBreakdownChip(title: "Weather", value: "+\(weatherMl)mL")
+                Spacer(minLength: 8)
+                Button {
+                    applyAISuggestionMl(totalMl)
+                } label: {
+                    Text("Add to goal")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(accentOrange)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .disabled(viewModel.goal <= 0)
+                .accessibilityHint("Increases your daily glass goal based on the suggestion")
             }
         }
-        .frame(maxWidth: .infinity)
         .padding(20)
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "#8B7CF8"), Color(hex: "#5E5CE6")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
+    }
+
+    private func aiBreakdownChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.75))
+            Text(value)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func applyAISuggestionMl(_ ml: Int) {
+        guard viewModel.goal > 0 else {
+            showEditGoal = true
+            return
+        }
+        let gs = max(viewModel.glassSize, 1)
+        let extraGlasses = max(1, Int(ceil(Double(ml) / Double(gs))))
+        viewModel.updateGoal(viewModel.goal + extraGlasses)
+    }
+
+    private var supplementAdviceCard: some View {
+        HStack(alignment: .top, spacing: 14) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(hex: "#E8E4FF"))
+                .frame(width: 48, height: 48)
+                .overlay(
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(Color(hex: "#5E5CE6"))
+                )
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("SUPPLEMENT ADVICE")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Color(hex: "#5E5CE6"))
+
+                Text("Since you are taking supplements like creatine, it is advisable that you drink more water throughout the day to stay hydrated and support recovery.")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(hex: "#636366"))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(18)
+        .background(Color(hex: "#F3F0FF"))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
     }
 
     private var reminderSubtitle: String {
         guard let reminder = viewModel.reminder, reminder.isEnabled else {
-            return "Get notified to drink water"
+            return "You will be notified"
         }
         if reminder.reminderTimes.isEmpty {
             return "Add times below"
@@ -427,6 +619,32 @@ struct WaterTrackingView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Progress ring
+
+private struct WaterProgressRing: View {
+    var progress: Double
+    var diameter: CGFloat = 208
+    var lineWidth: CGFloat = 14
+    var fill: Color
+
+    private var track: Color { Color(hex: "#E5E5EA") }
+
+    var body: some View {
+        let p = CGFloat(min(max(progress, 0), 1))
+        ZStack {
+            Circle()
+                .stroke(track, lineWidth: lineWidth)
+                .frame(width: diameter, height: diameter)
+            Circle()
+                .trim(from: 0, to: p)
+                .stroke(fill, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .frame(width: diameter, height: diameter)
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.35), value: p)
+        }
     }
 }
 

@@ -3,49 +3,47 @@ import UIKit
 
 struct CustomTabBar: View {
     @Binding var selectedTab: Int
-    
+
     var body: some View {
         HStack(spacing: 0) {
             TabBarButton(
-                icon: "house.fill",
+                assetName: "home",
                 title: "Home",
                 isSelected: selectedTab == 0,
-                action: { 
+                action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = 0
                     }
                 }
             )
-            
+
             TabBarButton(
-                icon: "calendar",
-                title: "Calendar",
+                assetName: "dumble",
+                title: "Workout",
                 isSelected: selectedTab == 1,
-                action: { 
+                action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = 1
                     }
                 }
             )
-            
+
             TabBarButton(
-                icon: "play.fill",
+                assetName: "play",
                 title: "Video",
                 isSelected: selectedTab == 2,
-                action: { 
+                action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = 2
                     }
                 }
             )
-            
+
             TabBarButton(
-                icon: "person.fill",
+                assetName: "profilecircle",
                 title: "Profile",
                 isSelected: selectedTab == 3,
-                customImageName: "ProfileTabIcon",
-                customImageNameSelected: "ProfileTabIconSelected",
-                action: { 
+                action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = 3
                     }
@@ -63,53 +61,54 @@ struct CustomTabBar: View {
 }
 
 struct TabBarButton: View {
-    let icon: String
+    let assetName: String
     let title: String
     let isSelected: Bool
-    var customImageName: String? = nil
-    var customImageNameSelected: String? = nil
     let action: () -> Void
-    
-    private var effectiveCustomImageName: String? {
-        if isSelected, let selected = customImageNameSelected { return selected }
-        return customImageName
-    }
-    
+
+    private let inactiveIconGray = Color(hex: "#7E7E7E")
+    private let pillBlack = Color(hex: "#1A1A1A")
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                ZStack {
-                    if isSelected {
-                        Circle()
-                            .fill(Color(hex: "#2A2A2A"))
-                            .frame(width: 40, height: 40)
+            Group {
+                if isSelected {
+                    HStack {
+                        Spacer(minLength: 0)
+                        HStack(spacing: 8) {
+                            tabAssetImage(selected: true)
+                            Text(title.uppercased())
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(pillBlack)
+                        .clipShape(Capsule())
+                        Spacer(minLength: 0)
                     }
-                    
-                    if let name = effectiveCustomImageName {
-                        Image(name)
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: isSelected ? 18 : 20, height: isSelected ? 18 : 20)
-                            .foregroundColor(isSelected ? .white : Color(hex: "#7E7E7E"))
-                    } else {
-                        Image(systemName: icon)
-                            .font(.system(size: isSelected ? 20 : 22, weight: isSelected ? .semibold : .regular))
-                            .foregroundColor(isSelected ? .white : Color(hex: "#7E7E7E"))
-                    }
+                } else {
+                    tabAssetImage(selected: false)
+                        .frame(maxWidth: .infinity, maxHeight: 44, alignment: .center)
                 }
-                .frame(height: 40)
-                
-                Text(title)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
-                    .foregroundColor(isSelected ? Color(hex: "#2A2A2A") : Color(hex: "#7E7E7E"))
             }
             .frame(maxWidth: .infinity)
+            .frame(height: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel(title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private func tabAssetImage(selected: Bool) -> some View {
+        Image(assetName)
+            .resizable()
+            .renderingMode(.template)
+            .scaledToFit()
+            .frame(width: selected ? 20 : 24, height: selected ? 20 : 24)
+            .foregroundColor(selected ? .white : inactiveIconGray)
     }
 }
 

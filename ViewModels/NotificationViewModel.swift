@@ -6,6 +6,8 @@ class NotificationViewModel: ObservableObject {
     @Published var notifications: [Notification] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    /// Set only when the main list fetch fails (not used for mark-read / delete errors).
+    @Published var listLoadError: String?
     
     private let notificationService = NotificationService.shared
     private let authService = AuthService.shared
@@ -42,16 +44,20 @@ class NotificationViewModel: ObservableObject {
     func fetchNotifications() async {
         guard let userId = authService.getCurrentAuthUser()?.uid else {
             errorMessage = "User not authenticated"
+            listLoadError = errorMessage
             return
         }
         
         isLoading = true
         errorMessage = nil
+        listLoadError = nil
         
         do {
             notifications = try await notificationService.fetchNotifications(userId: userId)
         } catch {
-            errorMessage = "Failed to load notifications. Please try again."
+            let msg = "Failed to load notifications. Please try again."
+            errorMessage = msg
+            listLoadError = msg
             print("Error fetching notifications: \(error.localizedDescription)")
         }
         

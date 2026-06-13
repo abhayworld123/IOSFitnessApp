@@ -2,6 +2,10 @@
   "name": "exercise-video-admin-server",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./app.js": "./src/app.js"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"

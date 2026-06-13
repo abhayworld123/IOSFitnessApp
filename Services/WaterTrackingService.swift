@@ -18,29 +18,15 @@ class WaterTrackingService: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
+        // Single-field query avoids a composite Firestore index (userId + date).
         let snapshot = try await db.collection(waterIntakeCollection)
             .whereField("userId", isEqualTo: userId)
-            .whereField("date", isGreaterThanOrEqualTo: Timestamp(date: startOfDay))
-            .whereField("date", isLessThan: Timestamp(date: endOfDay))
-            .limit(to: 1)
             .getDocuments()
         
-        guard let document = snapshot.documents.first else {
-            return nil
+        let records = snapshot.documents.compactMap { decodeIntakeRecord(from: $0) }
+        return records.first { record in
+            record.date >= startOfDay && record.date < endOfDay
         }
-        
-        var data = document.data()
-        if let date = data["date"] as? Timestamp {
-            data["date"] = date.dateValue()
-        }
-        if let createdAt = data["createdAt"] as? Timestamp {
-            data["createdAt"] = createdAt.dateValue()
-        }
-        if let updatedAt = data["updatedAt"] as? Timestamp {
-            data["updatedAt"] = updatedAt.dateValue()
-        }
-        
-        return try Firestore.Decoder().decode(WaterIntakeRecord.self, from: data)
     }
     
     // MARK: - Fetch Weekly Data
@@ -48,29 +34,12 @@ class WaterTrackingService: ObservableObject {
     func fetchWeeklyData(userId: String, startDate: Date, endDate: Date) async throws -> [WaterIntakeRecord] {
         let snapshot = try await db.collection(waterIntakeCollection)
             .whereField("userId", isEqualTo: userId)
-            .whereField("date", isGreaterThanOrEqualTo: Timestamp(date: startDate))
-            .whereField("date", isLessThanOrEqualTo: Timestamp(date: endDate))
-            .order(by: "date", descending: false)
             .getDocuments()
         
-        var intakes: [WaterIntakeRecord] = []
-        for document in snapshot.documents {
-            var data = document.data()
-            if let date = data["date"] as? Timestamp {
-                data["date"] = date.dateValue()
-            }
-            if let createdAt = data["createdAt"] as? Timestamp {
-                data["createdAt"] = createdAt.dateValue()
-            }
-            if let updatedAt = data["updatedAt"] as? Timestamp {
-                data["updatedAt"] = updatedAt.dateValue()
-            }
-            
-            if let intake = try? Firestore.Decoder().decode(WaterIntakeRecord.self, from: data) {
-                intakes.append(intake)
-            }
-        }
-        return intakes
+        return snapshot.documents
+            .compactMap { decodeIntakeRecord(from: $0) }
+            .filter { $0.date >= startDate && $0.date <= endDate }
+            .sorted { $0.date < $1.date }
     }
     
     // MARK: - Save Intake
@@ -123,5 +92,19 @@ class WaterTrackingService: ObservableObject {
         data["reminderTimes"] = reminder.reminderTimes.map { Timestamp(date: $0) }
         
         try await db.collection(waterRemindersCollection).document(reminder.id).setData(data, merge: true)
+    }
+    
+    private func decodeIntakeRecord(from document: QueryDocumentSnapshot) -> WaterIntakeRecord? {
+        var data = document.data()
+        if let date = data["date"] as? Timestamp {
+            data["date"] = date.dateValue()
+        }
+        if let createdAt = data["createdAt"] as? Timestamp {
+            data["createdAt"] = createdAt.dateValue()
+        }
+        if let updatedAt = data["updatedAt"] as? Timestamp {
+            data["updatedAt"] = updatedAt.dateValue()
+        }
+        return try? Firestore.Decoder().decode(WaterIntakeRecord.self, from: data)
     }
 }

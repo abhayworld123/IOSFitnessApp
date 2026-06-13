@@ -16,13 +16,33 @@ function resolveServiceAccountPath(p) {
 
 let initialized = false;
 
+function useApplicationDefaultCredentials() {
+  return (
+    process.env.USE_GOOGLE_APPLICATION_CREDENTIALS === '1' ||
+    Boolean(process.env.FUNCTION_TARGET) ||
+    Boolean(process.env.K_SERVICE) ||
+    Boolean(process.env.CLOUD_RUN_JOB)
+  );
+}
+
 export function initFirebase() {
   if (initialized) return;
+
+  if (useApplicationDefaultCredentials()) {
+    try {
+      admin.initializeApp();
+    } catch (e) {
+      throw new Error(`Firebase initializeApp (ADC) failed: ${e.message || e}`);
+    }
+    initialized = true;
+    return;
+  }
+
   const rawPath = config.firebaseServiceAccountPath;
   const path = resolveServiceAccountPath(rawPath);
   if (!path || !existsSync(path)) {
     throw new Error(
-      `Service account file not found. Resolved path: "${path || '(empty)'}". Set FIREBASE_SERVICE_ACCOUNT_PATH in server/.env (e.g. secrets/serviceAccount.json) and use a path under the server/ folder, or an absolute path to your Firebase JSON key.`
+      `Service account file not found. Resolved path: "${path || '(empty)'}". Set FIREBASE_SERVICE_ACCOUNT_PATH in server/.env (e.g. secrets/serviceAccount.json), or run on Cloud Functions / Cloud Run with a service account that can access Firestore.`
     );
   }
   let sa;

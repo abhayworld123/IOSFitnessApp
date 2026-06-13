@@ -1,13 +1,33 @@
 const base = () => {
   const u = (import.meta.env.VITE_API_URL || '').trim();
-  if (u) return u.replace(/\/$/, '');
+  // In production on Firebase Hosting we want same-origin `/api/...` requests.
+  // If someone accidentally leaves VITE_API_URL=http://localhost:8787 in web/.env,
+  // ignore it to avoid broken production fetches.
+  if (u) {
+    const normalized = u.replace(/\/$/, '');
+    if (import.meta.env.PROD) {
+      const lower = normalized.toLowerCase();
+      if (
+        lower.startsWith('http://localhost') ||
+        lower.startsWith('http://127.0.0.1') ||
+        lower.includes('://localhost:') ||
+        lower.includes('://127.0.0.1:')
+      ) {
+        return '';
+      }
+    }
+    return normalized;
+  }
   if (import.meta.env.DEV) return '';
+  // Production build on Firebase Hosting: same-origin requests to /api/...
+  if (import.meta.env.PROD) return '';
   return '';
 };
 
 function requireBaseUrl() {
   const b = base();
   if (import.meta.env.DEV && b === '') return '';
+  if (b === '' && import.meta.env.PROD) return '';
   if (!b) {
     throw new Error(
       'Missing VITE_API_URL. For local dev you can omit it if the Vite proxy is used (npm run dev) and the API runs on port 8787. Otherwise set web/.env to VITE_API_URL=http://localhost:8787 and restart Vite.'
@@ -158,4 +178,83 @@ export async function uploadFileToR2(file, presignPayload) {
     body: file,
   });
   if (!put.ok) throw new Error(`R2 upload failed: ${put.status}`);
+}
+
+export async function getAICoachSettings() {
+  const r = await fetch(apiUrl('/api/admin/settings/ai-coach'), { headers: headers() });
+  const j = await parseJsonResponse(r);
+  return j.settings || {};
+}
+
+export async function patchAICoachSettings(body) {
+  const r = await fetch(apiUrl('/api/admin/settings/ai-coach'), {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  const j = await parseJsonResponse(r);
+  return j.settings || {};
+}
+
+// --- Categories
+
+export async function listCategories(placement) {
+  const q = placement ? `?placement=${encodeURIComponent(placement)}` : '';
+  const r = await fetch(apiUrl(`/api/admin/categories${q}`), { headers: headers() });
+  const j = await parseJsonResponse(r);
+  return j.categories || [];
+}
+
+export async function seedCategories() {
+  const r = await fetch(apiUrl('/api/admin/categories/seed'), {
+    method: 'POST',
+    headers: headers(),
+  });
+  const j = await parseJsonResponse(r);
+  return j.categories || [];
+}
+
+export async function createCategory(body) {
+  const r = await fetch(apiUrl('/api/admin/categories'), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  return parseJsonResponse(r);
+}
+
+export async function patchCategory(id, body) {
+  const r = await fetch(apiUrl(`/api/admin/categories/${encodeURIComponent(id)}`), {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  return parseJsonResponse(r);
+}
+
+export async function presignCategoryImage(id, filename, contentType) {
+  const r = await fetch(apiUrl(`/api/admin/categories/${encodeURIComponent(id)}/image/presign`), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ filename, contentType }),
+  });
+  return parseJsonResponse(r);
+}
+
+export async function completeCategoryImageUpload(id, key) {
+  const r = await fetch(apiUrl(`/api/admin/categories/${encodeURIComponent(id)}/image/complete`), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ key }),
+  });
+  return parseJsonResponse(r);
+}
+
+export async function importCategoryImageFromUrl(id, url) {
+  const r = await fetch(apiUrl(`/api/admin/categories/${encodeURIComponent(id)}/image/import-url`), {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ url }),
+  });
+  return parseJsonResponse(r);
 }

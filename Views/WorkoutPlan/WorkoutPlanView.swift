@@ -14,6 +14,12 @@ struct WorkoutPlanView: View {
                 
                 if viewModel.isLoading && viewModel.currentPlan == nil {
                     loadingView
+                } else if let ple = viewModel.planLoadError, !viewModel.isLoading {
+                    LoadFailureFallbackView(
+                        message: ple,
+                        onRetry: { Task { await viewModel.fetchUserPlan() } },
+                        onGoBack: nil
+                    )
                 } else if let plan = viewModel.currentPlan {
                     planView(plan: plan)
                 } else {
@@ -307,28 +313,11 @@ struct WorkoutDetailSheet: View {
                             .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
                     }
                 } else if let errorMessage = errorMessage {
-                    VStack(spacing: 24) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme).opacity(0.5))
-                        
-                        Text("Failed to Load Workout")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
-                        
-                        Text(errorMessage)
-                            .font(.system(size: 16))
-                            .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                        
-                        Button("Retry") {
-                            Task {
-                                await loadWorkout()
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
+                    LoadFailureFallbackView(
+                        message: errorMessage,
+                        onRetry: { Task { await loadWorkout() } },
+                        onGoBack: { dismiss() }
+                    )
                 } else if let workout = workout {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {

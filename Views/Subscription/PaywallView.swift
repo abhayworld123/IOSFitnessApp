@@ -11,8 +11,19 @@ struct PaywallView: View {
             ZStack {
                 AppConstants.Colors.background(colorScheme: colorScheme)
                     .ignoresSafeArea()
-                
-                ScrollView {
+
+                if viewModel.isLoading && viewModel.products.isEmpty {
+                    ProgressView()
+                } else if let err = viewModel.errorMessage,
+                          viewModel.products.isEmpty,
+                          !viewModel.isLoading {
+                    LoadFailureFallbackView(
+                        message: err,
+                        onRetry: { Task { await viewModel.fetchProducts() } },
+                        onGoBack: { dismiss() }
+                    )
+                } else {
+                    ScrollView {
                     VStack(spacing: 32) {
                         // Hero Section
                         heroSection
@@ -33,6 +44,7 @@ struct PaywallView: View {
                         termsAndPrivacySection
                     }
                     .padding(.vertical, 20)
+                }
                 }
             }
             .navigationTitle("Upgrade to Premium")

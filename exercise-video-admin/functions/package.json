@@ -1,0 +1,22 @@
+{
+  "name": "exercise-video-admin-functions",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "scripts": {
+    "prepare:server": "rm -rf ./server-src && mkdir -p ./server-src && cp -R ../server/src/. ./server-src/"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.774.0",
+    "@aws-sdk/s3-request-presigner": "^3.774.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0",
+    "helmet": "^8.0.0"
+  }
+}

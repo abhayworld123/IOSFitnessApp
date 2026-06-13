@@ -5,16 +5,16 @@ struct NewOnboardingView: View {
     @Binding var isPresented: Bool
     @State private var currentPage = 0
     @State private var basicDetails = BasicDetailsData()
+    @State private var persistFailureMessage: String?
+    @State private var isCompleting = false
     
     private let pages = NewOnboardingPage.pages
     private let totalPages = OnboardingStep.count
     
     var body: some View {
         ZStack {
-            // Page Content
             switch currentPage {
             case 0:
-                // First screen - Full screen background
                 NewOnboardingScreen1View(page: pages[0]) {
                     goToNextPage()
                 }
@@ -24,15 +24,10 @@ struct NewOnboardingView: View {
                 ))
                 
             case 1:
-                // Second screen - Basic Details (Gender)
                 BasicDetailsView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -42,15 +37,10 @@ struct NewOnboardingView: View {
                 ))
                 
             case 2:
-                // Third screen - Age Selection
-                AgeSelectionView(
+                BasicVitalsOnboardingView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -60,15 +50,11 @@ struct NewOnboardingView: View {
                 ))
                 
             case 3:
-                // Fourth screen - Weight Selection
-                WeightSelectionView(
+                ActivityLevelSelectionView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
+                    onSkip: { skipStep(.activityLevel) },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -78,15 +64,11 @@ struct NewOnboardingView: View {
                 ))
                 
             case 4:
-                // Fifth screen - Height Selection
-                HeightSelectionView(
+                PhysicalLimitationsView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
+                    onSkip: { skipStep(.physicalLimitations) },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -96,18 +78,11 @@ struct NewOnboardingView: View {
                 ))
                 
             case 5:
-                // Sixth screen - Activity Level Selection
-                ActivityLevelSelectionView(
+                ActivityInterestsView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
-                    onSkip: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
+                    onSkip: { skipStep(.activityInterests) },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -117,18 +92,11 @@ struct NewOnboardingView: View {
                 ))
                 
             case 6:
-                // Seventh screen - Physical Limitations Selection
-                PhysicalLimitationsView(
+                GoalsSelectionView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
-                    onSkip: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
+                    onSkip: { skipStep(.goals) },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -138,60 +106,11 @@ struct NewOnboardingView: View {
                 ))
                 
             case 7:
-                // Eighth screen - Activity Interests Selection
-                ActivityInterestsView(
-                    basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
-                    onSkip: {
-                        goToNextPage()
-                    },
-                    currentPage: currentPage,
-                    totalPages: totalPages
-                )
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-                
-            case 8:
-                // Ninth screen - Goals Selection
-                GoalsSelectionView(
-                    basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
-                    onSkip: {
-                        goToNextPage()
-                    },
-                    currentPage: currentPage,
-                    totalPages: totalPages
-                )
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-                
-            case 9:
-                // Tenth screen - Meal Preferences Selection
                 MealPreferencesView(
                     basicDetails: $basicDetails,
-                    onBack: {
-                        goToPreviousPage()
-                    },
-                    onNext: {
-                        goToNextPage()
-                    },
-                    onSkip: {
-                        goToNextPage()
-                    },
+                    onBack: { goToPreviousPage() },
+                    onNext: { goToNextPage() },
+                    onSkip: { skipStep(.mealPreferences) },
                     currentPage: currentPage,
                     totalPages: totalPages
                 )
@@ -201,7 +120,6 @@ struct NewOnboardingView: View {
                 ))
                 
             default:
-                // Placeholder for additional screens
                 Color.white
                     .overlay(
                         VStack {
@@ -214,19 +132,36 @@ struct NewOnboardingView: View {
                         }
                     )
             }
+
+            if isCompleting {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                ProgressView("Saving profile…")
+                    .padding(24)
+                    .background(Color.white)
+                    .cornerRadius(12)
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: currentPage)
+        .alert("Save failed", isPresented: Binding(
+            get: { persistFailureMessage != nil },
+            set: { if !$0 { persistFailureMessage = nil } }
+        )) {
+            Button("OK") { persistFailureMessage = nil }
+        } message: {
+            Text(persistFailureMessage ?? "")
+        }
     }
     
-    private func goToNextPage() {
+    private func goToNextPage(clearedFields: Set<OnboardingClearedField> = []) {
         if currentPage < totalPages - 1 {
             let leavingPage = currentPage
             currentPage += 1
             if leavingPage >= 1 {
-                syncBasicDetailsToFirebase()
+                syncBasicDetailsToFirebase(clearedFields: clearedFields)
             }
         } else {
-            completeOnboarding()
+            completeOnboarding(clearedFields: clearedFields)
         }
     }
     
@@ -235,18 +170,57 @@ struct NewOnboardingView: View {
             currentPage -= 1
         }
     }
+
+    private func skipStep(_ step: OnboardingStep) {
+        var cleared = Set<OnboardingClearedField>()
+        switch step {
+        case .activityLevel:
+            basicDetails.activityLevel = nil
+            cleared.insert(.activityLevel)
+        case .physicalLimitations:
+            basicDetails.physicalLimitations = []
+            cleared.insert(.physicalLimitations)
+        case .activityInterests:
+            basicDetails.interestedActivities = []
+            cleared.insert(.interestedActivities)
+        case .goals:
+            basicDetails.fitnessGoal = nil
+            cleared.insert(.fitnessGoal)
+        case .mealPreferences:
+            basicDetails.mealPreference = nil
+            cleared.insert(.mealPreference)
+        default:
+            break
+        }
+        goToNextPage(clearedFields: cleared)
+    }
     
-    private func completeOnboarding() {
-        syncBasicDetailsToFirebase()
-        HapticFeedback.success()
-        withAnimation(.easeInOut(duration: 0.5)) {
-            isPresented = false
+    private func completeOnboarding(clearedFields: Set<OnboardingClearedField> = []) {
+        guard !isCompleting else { return }
+        isCompleting = true
+        Task {
+            let ok = await authViewModel.persistOnboardingDetails(
+                basicDetails,
+                markProfileOnboardingComplete: true,
+                clearedFields: clearedFields
+            )
+            await MainActor.run {
+                isCompleting = false
+                guard ok else {
+                    persistFailureMessage = "Could not save your profile. Check your connection and try again."
+                    return
+                }
+                HapticFeedback.success()
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    isPresented = false
+                }
+            }
         }
     }
 
-    private func syncBasicDetailsToFirebase() {
+    private func syncBasicDetailsToFirebase(clearedFields: Set<OnboardingClearedField> = []) {
         Task {
-            await authViewModel.persistOnboardingDetails(basicDetails)
+            _ = await authViewModel.persistOnboardingDetails(basicDetails, clearedFields: clearedFields)
         }
     }
 }
@@ -259,7 +233,7 @@ struct NewOnboardingPreviewView: View {
     
     var body: some View {
         NewOnboardingView(isPresented: $showFullFlow)
-            .onChange(of: showFullFlow) { newValue in
+            .onChange(of: showFullFlow) { _, newValue in
                 if !newValue {
                     dismiss()
                 }

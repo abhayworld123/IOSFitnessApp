@@ -42,6 +42,12 @@ export function buildThumbnailObjectKey(exerciseId, filename) {
   return `exercises/${exerciseId}/thumbnails/${randomUUID()}-${safe}`;
 }
 
+/** Category presentation images for workout home, chips, and filters. */
+export function buildCategoryImageObjectKey(categoryId, filename) {
+  const safe = (filename || 'image.png').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return `categories/${categoryId}/images/${randomUUID()}-${safe}`;
+}
+
 export async function presignPut(key, contentType) {
   const c = getClient();
   const cmd = new PutObjectCommand({

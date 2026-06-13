@@ -6,6 +6,8 @@ class WorkoutPlanViewModel: ObservableObject {
     @Published var currentPlan: WorkoutPlan?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    /// Only set when fetching an existing plan fails (generation errors keep using ``errorMessage``).
+    @Published var planLoadError: String?
     @Published var generationProgress: Double = 0
     
     private let planService = WorkoutPlanService.shared
@@ -24,7 +26,7 @@ class WorkoutPlanViewModel: ObservableObject {
     
     func fetchUserPlan() async {
         guard let userId = authService.getCurrentAuthUser()?.uid else {
-            // User not authenticated yet, silently return
+            planLoadError = nil
             errorMessage = nil
             currentPlan = nil
             return
@@ -32,15 +34,17 @@ class WorkoutPlanViewModel: ObservableObject {
         
         isLoading = true
         errorMessage = nil
+        planLoadError = nil
         
         do {
             currentPlan = try await planService.fetchUserPlan(userId: userId)
             if currentPlan == nil {
-                // No plan found, but this is not an error - user just needs to create one
                 errorMessage = nil
             }
         } catch {
-            errorMessage = "Failed to load workout plan. Please try again."
+            let msg = "Failed to load workout plan. Please try again."
+            planLoadError = msg
+            errorMessage = msg
             print("Error fetching plan: \(error.localizedDescription)")
             currentPlan = nil
         }
@@ -96,6 +100,7 @@ class WorkoutPlanViewModel: ObservableObject {
             generationProgress = 1.0
             
             currentPlan = plan
+            planLoadError = nil
             AnalyticsService.shared.trackPlanGenerated(goal: goal.displayName, daysPerWeek: daysPerWeek)
             HapticFeedback.success()
         } catch {

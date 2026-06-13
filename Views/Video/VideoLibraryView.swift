@@ -7,6 +7,7 @@ private enum VideoLibrarySection: String, CaseIterable {
 
 struct VideoLibraryView: View {
     @StateObject private var viewModel = VideoLibraryViewModel()
+    @EnvironmentObject private var categoryStore: CategoryConfigStore
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedWorkout: Workout?
     @State private var showPaywall = false
@@ -25,6 +26,17 @@ struct VideoLibraryView: View {
                 
                 if viewModel.isLoading && viewModel.workouts.isEmpty && viewModel.exercises.isEmpty {
                     loadingView
+                } else if let err = viewModel.errorMessage,
+                          !viewModel.isLoading,
+                          viewModel.workouts.isEmpty,
+                          viewModel.exercises.isEmpty {
+                    LoadFailureFallbackView(
+                        message: err,
+                        onRetry: {
+                            Task { await viewModel.fetchWorkouts(userId: authViewModel.currentUser?.id) }
+                        },
+                        onGoBack: nil
+                    )
                 } else {
                     VStack(spacing: 0) {
                         Picker("Section", selection: $librarySection) {
@@ -128,10 +140,9 @@ struct VideoLibraryView: View {
                         viewModel.filterWorkouts(by: category)
                     }) {
                         HStack(spacing: 6) {
-                            Image(systemName: category.icon)
-                                .font(.system(size: 14))
+                            categoryFilterIcon(for: category)
                             
-                            Text(category.displayName)
+                            Text(categoryFilterLabel(for: category))
                                 .font(.system(size: 14, weight: .medium))
                         }
                         .foregroundColor(viewModel.selectedCategory == category ? .white : .primary)
@@ -147,6 +158,25 @@ struct VideoLibraryView: View {
                 }
             }
             .padding(.horizontal, 20)
+        }
+        .task { await categoryStore.reload() }
+    }
+
+    private func categoryFilterLabel(for category: WorkoutCategory) -> String {
+        if let remote = categoryStore.category(matching: category, placement: .videoLibraryFilter) {
+            return remote.label(for: .videoLibraryFilter, fallback: category.displayName)
+        }
+        return category.displayName
+    }
+
+    @ViewBuilder
+    private func categoryFilterIcon(for category: WorkoutCategory) -> some View {
+        if let remote = categoryStore.category(matching: category, placement: .videoLibraryFilter),
+           let url = remote.normalizedImageURL {
+            CategoryRemoteIcon(url: url, fallbackSystemName: category.icon, size: 14)
+        } else {
+            Image(systemName: category.icon)
+                .font(.system(size: 14))
         }
     }
     

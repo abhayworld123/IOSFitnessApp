@@ -21,6 +21,22 @@ enum ExerciseAPIConfiguration {
     }
 
     static var isConfigured: Bool { baseURL != nil }
+
+    /// Base URL for Aura coach chat. Falls back to `ExerciseAPIBaseURL`.
+    /// Set `ExerciseAPIChatBaseURL` to a direct Cloud Function URL if Hosting POST requests drop on simulator.
+    static var chatBaseURL: URL? {
+        normalizedURL(fromInfoKey: "ExerciseAPIChatBaseURL") ?? baseURL
+    }
+
+    private static func normalizedURL(fromInfoKey key: String) -> URL? {
+        guard let s = Bundle.main.object(forInfoDictionaryKey: key) as? String else { return nil }
+        var trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        while trimmed.hasSuffix("/") {
+            trimmed = String(trimmed.dropLast())
+        }
+        return URL(string: trimmed)
+    }
 }
 
 enum ExerciseCatalogMerge {
@@ -98,9 +114,9 @@ struct ExerciseAPIService {
             throw ExerciseAPIError.notConfigured
         }
         let url = base.appendingPathComponent("api/v1/exercises")
-        var request = URLRequest(url: url)
+        var request = ExerciseAPIHTTPClient.preparedRequest(url: url)
         addAppKey(to: &request)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ExerciseAPIHTTPClient.data(for: request)
         try validate(response: response, data: data)
         return try decodeList(data)
     }
@@ -110,13 +126,13 @@ struct ExerciseAPIService {
             throw ExerciseAPIError.notConfigured
         }
         let url = base.appendingPathComponent("api/v1/exercises/by-ids")
-        var request = URLRequest(url: url)
+        var request = ExerciseAPIHTTPClient.preparedRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         addAppKey(to: &request)
         let body = ["ids": ids]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ExerciseAPIHTTPClient.data(for: request)
         try validate(response: response, data: data)
         return try decodeList(data)
     }

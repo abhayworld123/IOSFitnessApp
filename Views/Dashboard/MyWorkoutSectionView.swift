@@ -3,38 +3,48 @@ import SwiftUI
 struct MyWorkoutSectionView: View {
     let actions: [WorkoutQuickAction]
     let userWorkouts: [Workout]
+    let isFirstTimeUser: Bool
     let onActionTap: (WorkoutActionType) -> Void
     let onWorkoutTap: ((Workout) -> Void)?
     
     init(
         actions: [WorkoutQuickAction],
         userWorkouts: [Workout] = [],
+        isFirstTimeUser: Bool = false,
         onActionTap: @escaping (WorkoutActionType) -> Void,
         onWorkoutTap: ((Workout) -> Void)? = nil
     ) {
         self.actions = actions
         self.userWorkouts = userWorkouts
+        self.isFirstTimeUser = isFirstTimeUser
         self.onActionTap = onActionTap
         self.onWorkoutTap = onWorkoutTap
+    }
+    
+    private var displayedActions: [WorkoutQuickAction] {
+        if isFirstTimeUser, let first = actions.first {
+            return [first]
+        }
+        return actions
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Title
             Text("My workout")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
+                .font(.system(size: isFirstTimeUser ? 19 : 20, weight: .bold))
+                .foregroundColor(AppConstants.TrakkitHome.heading)
             
             // Content inside single card
             VStack(spacing: 0) {
                 // Action Rows
-                ForEach(Array(actions.enumerated()), id: \.element.id) { index, action in
-                    WorkoutActionRow(action: action) {
+                ForEach(Array(displayedActions.enumerated()), id: \.element.id) { index, action in
+                    WorkoutActionRow(action: action, isFirstTimeUser: isFirstTimeUser) {
                         onActionTap(action.action)
                     }
                     
                     // Divider between items (not after last action if no workouts)
-                    if index < actions.count - 1 || !userWorkouts.isEmpty {
+                    if index < displayedActions.count - 1 || !userWorkouts.isEmpty {
                         Divider()
                             .background(Color(hex: "#E5E5EA"))
                             .padding(.leading, 60) // Align with content, not icon
@@ -42,7 +52,7 @@ struct MyWorkoutSectionView: View {
                 }
                 
                 // Divider between actions and workouts
-                if !userWorkouts.isEmpty && !actions.isEmpty {
+                if !userWorkouts.isEmpty && !displayedActions.isEmpty {
                     Divider()
                         .background(Color(hex: "#E5E5EA"))
                         .padding(.leading, 60)
@@ -65,14 +75,20 @@ struct MyWorkoutSectionView: View {
         }
         .padding(20)
         .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: AppConstants.TrakkitHome.cardCornerRadius, style: .continuous))
+        .shadow(
+            color: AppConstants.TrakkitHome.cardShadowColor,
+            radius: AppConstants.TrakkitHome.cardShadowRadius,
+            x: 0,
+            y: AppConstants.TrakkitHome.cardShadowY
+        )
         .padding(.horizontal, 20)
     }
 }
 
 struct WorkoutActionRow: View {
     let action: WorkoutQuickAction
+    var isFirstTimeUser: Bool = false
     let onTap: () -> Void
     
     var body: some View {
@@ -90,16 +106,15 @@ struct WorkoutActionRow: View {
                 }
                 
                 // Text
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(action.title)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(action.iconColor) // Use icon color for text
-                    
+                        .font(.system(size: isFirstTimeUser ? 16 : 14, weight: isFirstTimeUser ? .bold : .medium))
+                        .foregroundColor(action.iconColor)
+
                     if let subtitle = action.subtitle {
                         Text(subtitle)
-                            .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "#8E8E93"))
-                            .italic()
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(AppConstants.TrakkitHome.secondaryText)
                     }
                 }
                 

@@ -1,202 +1,235 @@
 import SwiftUI
 
-struct StreakCardView: View {
-    let streakData: StreakData
-    let onViewCalendar: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header - Outside the card
-            HStack {
-                Text("Your Streak")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1C1C1E"))
-                
-                Spacer()
-                
-                Button(action: onViewCalendar) {
-                    Text("View Calendar")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#FF9500"))
-                }
-                .accessibilityLabel("View workout streak calendar")
-            }
-            .padding(.horizontal, 20)
-            
-            // Streak Card - White card with content
-            HStack(spacing: 16) {
-                // Fire Icon with "Weeks"
-                VStack(spacing: 4) {
-                    FlameIconView()
-                        .frame(width: 24, height: 32)
-                    
-                    Text("Weeks")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color(hex: "#8E8E93"))
-                }
-                .frame(width: 60)
-                
-                // Week Days
-                HStack(spacing: 8) {
-                    ForEach(streakData.weeklyActivities) { day in
-                        VStack(spacing: 8) {
-                            Text(day.dayName)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Color(hex: "#8E8E93"))
-                            
-                            ZStack {
-                                Circle()
-                                    .fill(day.isCompleted ? Color(hex: "#34C759") : Color(hex: "#E5E5EA"))
-                                    .frame(width: 28, height: 28)
-                                
-                                if day.isCompleted {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.white)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(20)
-            .background(Color.white)
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-            .padding(.horizontal, 20)
-        }
+/// One cell in Mon–Sun streak row (labels always M T W T F S S).
+private struct StreakCalendarDaySlot: Identifiable {
+    let id: String
+    let label: String
+    let date: Date
+    let isCompleted: Bool
+
+    var isToday: Bool {
+        Calendar.current.isDateInToday(date)
     }
 }
 
-// MARK: - Flame Icon View
+struct StreakCardView: View {
+    let streakData: StreakData
+    let personalBest: Int
+    let isFirstTimeUser: Bool
+    let onViewCalendar: () -> Void
 
-struct FlameIconView: View {
-    var body: some View {
-        GeometryReader { geometry in
-            let scaleX = geometry.size.width / 24.0
-            let scaleY = geometry.size.height / 32.0
-            
-            Path { path in
-                // Start point: M9 1.50256
-                path.move(to: CGPoint(x: 9 * scaleX, y: 1.50256 * scaleY))
-                
-                // First cubic bezier: C9 0.182557 10.584 -0.493943 11.538 0.419557
-                path.addCurve(
-                    to: CGPoint(x: 11.538 * scaleX, y: 0.419557 * scaleY),
-                    control1: CGPoint(x: 9 * scaleX, y: 0.182557 * scaleY),
-                    control2: CGPoint(x: 10.584 * scaleX, y: -0.493943 * scaleY)
-                )
-                
-                // Second cubic bezier: C14.475 3.23356 16.182 9.41206 14.163 14.0996
-                path.addCurve(
-                    to: CGPoint(x: 14.163 * scaleX, y: 14.0996 * scaleY),
-                    control1: CGPoint(x: 14.475 * scaleX, y: 3.23356 * scaleY),
-                    control2: CGPoint(x: 16.182 * scaleX, y: 9.41206 * scaleY)
-                )
-                
-                // Line: L14.043 14.3606
-                path.addLine(to: CGPoint(x: 14.043 * scaleX, y: 14.3606 * scaleY))
-                
-                // Line: L14.061 14.3651
-                path.addLine(to: CGPoint(x: 14.061 * scaleX, y: 14.3651 * scaleY))
-                
-                // Cubic bezier: C14.9985 14.5646 15.8655 13.7201 17.5155 11.1056
-                path.addCurve(
-                    to: CGPoint(x: 17.5155 * scaleX, y: 11.1056 * scaleY),
-                    control1: CGPoint(x: 14.9985 * scaleX, y: 14.5646 * scaleY),
-                    control2: CGPoint(x: 15.8655 * scaleX, y: 13.7201 * scaleY)
-                )
-                
-                // Line: L17.7255 10.7696
-                path.addLine(to: CGPoint(x: 17.7255 * scaleX, y: 10.7696 * scaleY))
-                
-                // Multiple cubic beziers for the curve
-                // C17.8472 10.5736 18.0125 10.4084 18.2084 10.2868
-                path.addCurve(
-                    to: CGPoint(x: 18.2084 * scaleX, y: 10.2868 * scaleY),
-                    control1: CGPoint(x: 17.8472 * scaleX, y: 10.5736 * scaleY),
-                    control2: CGPoint(x: 18.0125 * scaleX, y: 10.4084 * scaleY)
-                )
-                
-                // C18.4043 10.1651 18.6257 10.0903 18.8553 10.0681
-                path.addCurve(
-                    to: CGPoint(x: 18.8553 * scaleX, y: 10.0681 * scaleY),
-                    control1: CGPoint(x: 18.4043 * scaleX, y: 10.1651 * scaleY),
-                    control2: CGPoint(x: 18.6257 * scaleX, y: 10.0903 * scaleY)
-                )
-                
-                // C19.0848 10.0459 19.3164 10.0769 19.532 10.1588
-                path.addCurve(
-                    to: CGPoint(x: 19.532 * scaleX, y: 10.1588 * scaleY),
-                    control1: CGPoint(x: 19.0848 * scaleX, y: 10.0459 * scaleY),
-                    control2: CGPoint(x: 19.3164 * scaleX, y: 10.0769 * scaleY)
-                )
-                
-                // C19.7477 10.2406 19.9415 10.3711 20.0985 10.5401
-                path.addCurve(
-                    to: CGPoint(x: 20.0985 * scaleX, y: 10.5401 * scaleY),
-                    control1: CGPoint(x: 19.7477 * scaleX, y: 10.2406 * scaleY),
-                    control2: CGPoint(x: 19.9415 * scaleX, y: 10.3711 * scaleY)
-                )
-                
-                // C22.0995 12.6926 24 17.1056 24 19.9451
-                path.addCurve(
-                    to: CGPoint(x: 24 * scaleX, y: 19.9451 * scaleY),
-                    control1: CGPoint(x: 22.0995 * scaleX, y: 12.6926 * scaleY),
-                    control2: CGPoint(x: 24 * scaleX, y: 17.1056 * scaleY)
-                )
-                
-                // C24 26.3426 18.6135 31.5026 12 31.5026
-                path.addCurve(
-                    to: CGPoint(x: 12 * scaleX, y: 31.5026 * scaleY),
-                    control1: CGPoint(x: 24 * scaleX, y: 26.3426 * scaleY),
-                    control2: CGPoint(x: 18.6135 * scaleX, y: 31.5026 * scaleY)
-                )
-                
-                // C5.3865 31.5026 0 26.3426 0 19.9436
-                path.addCurve(
-                    to: CGPoint(x: 0 * scaleX, y: 19.9436 * scaleY),
-                    control1: CGPoint(x: 5.3865 * scaleX, y: 31.5026 * scaleY),
-                    control2: CGPoint(x: 0 * scaleX, y: 26.3426 * scaleY)
-                )
-                
-                // C0 16.5656 1.533 12.8696 3.948 10.4921
-                path.addCurve(
-                    to: CGPoint(x: 3.948 * scaleX, y: 10.4921 * scaleY),
-                    control1: CGPoint(x: 0 * scaleX, y: 16.5656 * scaleY),
-                    control2: CGPoint(x: 1.533 * scaleX, y: 12.8696 * scaleY)
-                )
-                
-                // L4.8555 9.60856
-                path.addLine(to: CGPoint(x: 4.8555 * scaleX, y: 9.60856 * scaleY))
-                
-                // C5.217 9.25456 5.5065 8.96356 5.7825 8.67256
-                path.addCurve(
-                    to: CGPoint(x: 5.7825 * scaleX, y: 8.67256 * scaleY),
-                    control1: CGPoint(x: 5.217 * scaleX, y: 9.25456 * scaleY),
-                    control2: CGPoint(x: 5.5065 * scaleX, y: 8.96356 * scaleY)
-                )
-                
-                // C7.9275 6.40456 9 4.28656 9 1.50256
-                path.addCurve(
-                    to: CGPoint(x: 9 * scaleX, y: 1.50256 * scaleY),
-                    control1: CGPoint(x: 7.9275 * scaleX, y: 6.40456 * scaleY),
-                    control2: CGPoint(x: 9 * scaleX, y: 4.28656 * scaleY)
-                )
-                
-                // Close path: Z
-                path.closeSubpath()
+    /// Current calendar week Monday → Sunday with fixed labels M T W T F S S.
+    private var calendarWeekSlots: [StreakCalendarDaySlot] {
+        let cal = Calendar.current
+        let idFormatter = DateFormatter()
+        idFormatter.calendar = cal
+        idFormatter.dateFormat = "yyyy-MM-dd"
+
+        let todayStart = cal.startOfDay(for: Date())
+        let weekday = cal.component(.weekday, from: todayStart)
+        let daysSinceMonday = (weekday + 5) % 7
+        guard let monday = cal.date(byAdding: .day, value: -daysSinceMonday, to: todayStart) else { return [] }
+
+        let labels = ["M", "T", "W", "T", "F", "S", "S"]
+        return (0..<7).compactMap { i -> StreakCalendarDaySlot? in
+            guard let date = cal.date(byAdding: .day, value: i, to: monday) else { return nil }
+            let dayStart = cal.startOfDay(for: date)
+            let completed = streakData.weeklyActivities.contains { act in
+                cal.isDate(cal.startOfDay(for: act.date), inSameDayAs: dayStart) && act.isCompleted
             }
-            .fill(Color(hex: "#EC8F37"))
+            return StreakCalendarDaySlot(
+                id: idFormatter.string(from: dayStart),
+                label: labels[i],
+                date: date,
+                isCompleted: completed
+            )
         }
+    }
+
+    private var isOnFire: Bool {
+        streakData.currentStreak >= 5
+    }
+
+    /// Maps consecutive-day streak to a week count for display (ceil(days / 7), min 0).
+    private func weeksFromDays(_ days: Int) -> Int {
+        guard days > 0 else { return 0 }
+        return (days + 6) / 7
+    }
+
+    private var streakWeeksTitle: String {
+        let w = weeksFromDays(streakData.currentStreak)
+        return "\(w) Week" + (w == 1 ? "" : "s")
+    }
+
+    private var personalBestWeeksLine: String {
+        let w = weeksFromDays(personalBest)
+        return "PERSONAL BEST: \(w) WEEK" + (w == 1 ? "" : "S")
+    }
+
+    var body: some View {
+        if isFirstTimeUser {
+            firstTimeStreakEmptyState
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .center, spacing: 6) {
+                    Image("streak")
+                        .resizable()
+                        .renderingMode(.original)
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                        .accessibilityHidden(true)
+
+                    Text(streakWeeksTitle)
+                        .font(.system(size: 23, weight: .bold))
+                        .foregroundColor(AppConstants.TrakkitHome.heading)
+
+                    Spacer(minLength: 6)
+
+                    if isOnFire {
+                        Text("ON FIRE")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(AppConstants.TrakkitHome.onFireText)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(AppConstants.TrakkitHome.onFireBackground)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                Text(personalBestWeeksLine)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(AppConstants.TrakkitHome.secondaryText)
+                    .tracking(0.45)
+
+                HStack(alignment: .center, spacing: 0) {
+                    HStack(spacing: 3) {
+                        ForEach(calendarWeekSlots) { slot in
+                            dayChipSlot(slot)
+                        }
+                    }
+                    .layoutPriority(-1)
+
+                    Spacer(minLength: 6)
+
+                    Button(action: onViewCalendar) {
+                        HStack(spacing: 3) {
+                            Text("VIEW CALENDAR")
+                                .font(.system(size: 11, weight: .bold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.82)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .foregroundColor(AppConstants.TrakkitHome.accentOrange)
+                    }
+                    .buttonStyle(.plain)
+                    .layoutPriority(1)
+                    .accessibilityLabel("View calendar")
+                }
+            }
+            .padding(18)
+            .background {
+                ZStack {
+                    Color.white
+                    RadialGradient(
+                        colors: [
+                            AppConstants.TrakkitHome.accentOrange.opacity(0.2),
+                            Color.clear
+                        ],
+                        center: UnitPoint(x: 0.12, y: 1.05),
+                        startRadius: 4,
+                        endRadius: 140
+                    )
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: AppConstants.TrakkitHome.cardCornerRadius, style: .continuous))
+            .shadow(
+                color: AppConstants.TrakkitHome.cardShadowColor,
+                radius: AppConstants.TrakkitHome.cardShadowRadius,
+                x: 0,
+                y: AppConstants.TrakkitHome.cardShadowY
+            )
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    private var firstTimeStreakEmptyState: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text("🔥")
+                    .font(.system(size: 22))
+                Text("No streaks")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(AppConstants.TrakkitHome.heading)
+            }
+
+            Text("Start your first session to begin your streak")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(AppConstants.TrakkitHome.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .overlay(
+            RoundedRectangle(cornerRadius: AppConstants.TrakkitHome.cardCornerRadius, style: .continuous)
+                .stroke(Color(hex: "#F1DCC7"), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppConstants.TrakkitHome.cardCornerRadius, style: .continuous))
+        .shadow(
+            color: AppConstants.TrakkitHome.cardShadowColor,
+            radius: AppConstants.TrakkitHome.cardShadowRadius,
+            x: 0,
+            y: AppConstants.TrakkitHome.cardShadowY
+        )
+        .padding(.horizontal, 20)
+    }
+
+    private func dayChipSlot(_ slot: StreakCalendarDaySlot) -> some View {
+        let isToday = slot.isToday
+        return Text(slot.label)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundColor(dayChipTextColor(isToday: isToday, completed: slot.isCompleted))
+            .frame(width: 26, height: 26)
+            .background(dayChipBackground(isToday: isToday, completed: slot.isCompleted))
+            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .shadow(
+                color: isToday ? AppConstants.TrakkitHome.accentOrange.opacity(0.5) : .clear,
+                radius: 8,
+                x: 0,
+                y: 3
+            )
+            .accessibilityLabel("\(slot.label) \(slot.isCompleted ? "completed" : "not completed")\(isToday ? ", today" : "")")
+    }
+
+    private func dayChipBackground(isToday: Bool, completed: Bool) -> Color {
+        if isToday {
+            return AppConstants.TrakkitHome.accentOrange
+        }
+        if completed {
+            return AppConstants.TrakkitHome.streakDayCompletedBackground
+        }
+        return AppConstants.TrakkitHome.streakDayInactiveBackground
+    }
+
+    private func dayChipTextColor(isToday: Bool, completed: Bool) -> Color {
+        if isToday {
+            return .white
+        }
+        if completed {
+            return AppConstants.TrakkitHome.streakDayCompletedText
+        }
+        return AppConstants.TrakkitHome.streakDayInactiveText
     }
 }
 
 #Preview {
     StreakCardView(
         streakData: DashboardViewModel2.generateMockStreakData(),
+        personalBest: 8,
+        isFirstTimeUser: false,
         onViewCalendar: {}
     )
-    .background(Color(hex: "#F5F5F7"))
+    .background(AppConstants.TrakkitHome.background)
     .previewLayout(.sizeThatFits)
 }

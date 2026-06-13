@@ -5,6 +5,7 @@ enum FirestoreCollections {
     static let users = "users"
     static let workouts = "workouts"
     static let exercises = "exercises"
+    static let categories = "categories"
     static let waterIntake = "waterIntake"
     static let waterReminders = "waterReminders"
     static let dailyStats = "dailyStats"
@@ -46,4 +47,8 @@ enum FirestoreFields {
     static let interestedActivities = "interestedActivities"
     static let heightUnitPreference = "heightUnitPreference"
     static let weightUnitPreference = "weightUnitPreference"
+    static let profileOnboardingCompleted = "profileOnboardingCompleted"
+    static let lastActiveAt = "lastActiveAt"
+    static let fcmTokens = "fcmTokens"
+    static let scenarioKey = "scenarioKey"
 }

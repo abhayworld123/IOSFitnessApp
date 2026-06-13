@@ -31,16 +31,14 @@ struct LoginView: View {
                     Spacer()
                         .frame(height: 60)
                     
-                    // App Logo/Title
+                    // App Logo
                     VStack(spacing: 12) {
-                        Image(systemName: "figure.run")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 10)
-                        
-                        Text("Fitness App")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                        AppLogoView(style: .wordmark, maxWidth: 240)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.95))
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
                         
                         Text("Transform your body, transform your life")
                             .font(.system(size: 16, weight: .medium))

@@ -137,3 +137,20 @@ struct Workout: Identifiable, Codable {
     }
 }
 
+extension Workout {
+    /// Local-only template for the first-time Quick Workout flow (bundle exercises `ex_001`…`ex_003`).
+    static func quickStarterTemplate() -> Workout {
+        Workout(
+            id: "trakkit_quick_start_template",
+            title: "Quick Workout",
+            description: "Starter back session for new members.",
+            category: .strength,
+            difficulty: .beginner,
+            duration: 25,
+            exercises: ["ex_001", "ex_002", "ex_003"],
+            caloriesBurned: 140,
+            userId: nil
+        )
+    }
+}
+

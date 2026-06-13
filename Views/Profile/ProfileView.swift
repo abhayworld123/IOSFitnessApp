@@ -8,6 +8,7 @@ private let profileTextSecondary = Color(hex: "#8E8E93")
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var notificationsViewModel = NotificationViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject private var themeManager = ThemeManager.shared
@@ -30,10 +31,19 @@ struct ProfileView: View {
             
             if viewModel.isLoading && viewModel.totalWorkoutsCompleted == 0 && viewModel.monthlyChartData.isEmpty {
                 loadingView
+            } else if let err = viewModel.errorMessage, !viewModel.isLoading {
+                LoadFailureFallbackView(
+                    message: err,
+                    onRetry: { Task { await viewModel.fetchUserStatistics() } },
+                    onGoBack: nil
+                )
             } else {
                 ScrollView {
                     VStack(spacing: 20) {
                         userBlockSection
+                        if hasAboutYouContent {
+                            aboutYouSection
+                        }
                         thisMonthSection
                         activitiesCardSection
                         badgesSection
@@ -91,7 +101,7 @@ struct ProfileView: View {
             PaywallView()
         }
         .sheet(isPresented: $showNotifications) {
-            NotificationsView()
+            NotificationsView(viewModel: notificationsViewModel)
         }
         .sheet(isPresented: $showNotificationSettings) {
             NotificationSettingsView()
@@ -116,6 +126,7 @@ struct ProfileView: View {
         }
         .onAppear {
             Task {
+                await authViewModel.refreshCurrentUser()
                 await viewModel.fetchUserStatistics()
             }
             AnalyticsService.shared.trackScreenView("Profile", screenClass: "ProfileView")
@@ -188,24 +199,97 @@ struct ProfileView: View {
     }
     
     private var weightDisplay: String {
-        if let w = authViewModel.currentUser?.weight {
-            return "\(Int(w)) KG"
-        }
-        return "80 KG"
+        ProfileDisplayFormatter.weight(
+            kg: authViewModel.currentUser?.weight,
+            unit: authViewModel.currentUser?.weightUnitPreference
+        )
     }
     
     private var ageDisplay: String {
-        if let a = authViewModel.currentUser?.age {
-            return "\(a)"
-        }
-        return "24"
+        ProfileDisplayFormatter.age(authViewModel.currentUser?.age)
     }
     
     private var heightDisplay: String {
-        if let h = authViewModel.currentUser?.height {
-            return "\(Int(h)) CM"
+        ProfileDisplayFormatter.height(
+            cm: authViewModel.currentUser?.height,
+            unit: authViewModel.currentUser?.heightUnitPreference
+        )
+    }
+
+    private var hasAboutYouContent: Bool {
+        let user = authViewModel.currentUser
+        return user?.gender != nil
+            || user?.fitnessGoal != nil
+            || user?.activityLevel != nil
+            || user?.mealPreference != nil
+            || !(user?.physicalLimitations?.isEmpty ?? true)
+            || !(user?.interestedActivities?.isEmpty ?? true)
+    }
+
+    private var aboutYouSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("About you")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(profileTextPrimary)
+                .padding(.horizontal, 4)
+
+            VStack(spacing: 0) {
+                if let gender = authViewModel.currentUser?.gender {
+                    aboutYouRow(label: "Gender", value: gender.displayName)
+                    aboutYouDivider
+                }
+                if let goal = authViewModel.currentUser?.fitnessGoal {
+                    aboutYouRow(label: "Goal", value: goal.onboardingDisplayName)
+                    aboutYouDivider
+                }
+                if let level = authViewModel.currentUser?.activityLevel {
+                    aboutYouRow(label: "Activity level", value: level.displayName)
+                    aboutYouDivider
+                }
+                if let meal = authViewModel.currentUser?.mealPreference {
+                    aboutYouRow(label: "Meal preference", value: meal.displayName)
+                    if !(authViewModel.currentUser?.interestedActivities?.isEmpty ?? true)
+                        || !(authViewModel.currentUser?.physicalLimitations?.isEmpty ?? true) {
+                        aboutYouDivider
+                    }
+                }
+                if let limitations = authViewModel.currentUser?.physicalLimitations, !limitations.isEmpty {
+                    aboutYouRow(label: "Limitations", value: limitations.joined(separator: ", "))
+                    if !(authViewModel.currentUser?.interestedActivities?.isEmpty ?? true) {
+                        aboutYouDivider
+                    }
+                }
+                if let activities = authViewModel.currentUser?.interestedActivities, !activities.isEmpty {
+                    aboutYouRow(label: "Interests", value: activities.joined(separator: ", "))
+                }
+            }
+            .background(profileCardWhite)
+            .cornerRadius(AppConstants.Design.cornerRadius)
         }
-        return "182 CM"
+    }
+
+    private func aboutYouRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(label)
+                .font(.system(size: 14))
+                .foregroundColor(profileTextSecondary)
+                .frame(width: 110, alignment: .leading)
+            Text(value)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(profileTextPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
+    }
+
+    private var aboutYouDivider: some View {
+        Rectangle()
+            .fill(profileTextSecondary.opacity(0.15))
+            .frame(height: 1)
+            .padding(.leading, 16)
     }
     
     private var initials: String {

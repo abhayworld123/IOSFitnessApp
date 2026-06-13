@@ -3,16 +3,16 @@ import SwiftUI
 struct HowToSectionView: View {
     let exercises: [Exercise]
     let onExerciseTap: (Exercise) -> Void
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("How to")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(AppConstants.TrakkitHome.heading)
                 .padding(.horizontal, 20)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     ForEach(exercises) { exercise in
                         HowToExerciseCard(exercise: exercise) {
                             onExerciseTap(exercise)
@@ -29,14 +29,27 @@ struct HowToExerciseCard: View {
     let exercise: Exercise
     let onTap: () -> Void
 
+    private var difficultyLabel: String {
+        switch exercise.difficultyLevel {
+        case .beginner:
+            return "Easy"
+        default:
+            return exercise.difficultyLevel.displayName
+        }
+    }
+
+    private var badgeColor: Color {
+        Color(hex: exercise.difficultyLevel.color)
+    }
+
     private var placeholderGradient: some View {
         Rectangle()
             .fill(
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        AppConstants.Colors.primary,
-                        AppConstants.Colors.secondary
-                    ]),
+                    colors: [
+                        AppConstants.TrakkitHome.upcomingGradientStart,
+                        AppConstants.TrakkitHome.upcomingGradientEnd
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -67,64 +80,68 @@ struct HowToExerciseCard: View {
             }
         }
     }
-    
+
     var body: some View {
         Button(action: onTap) {
             ZStack(alignment: .topLeading) {
                 thumbnailLayer
-                
-                // Gradient Overlay
+
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.clear,
-                        Color.black.opacity(0.6)
-                    ]),
+                    colors: [
+                        Color.black.opacity(0.1),
+                        Color.black.opacity(0.65)
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                
-                // Content Overlay
+
                 VStack {
                     HStack {
-                        // Difficulty Badge
-                        Text(exercise.difficultyLevel.displayName)
-                            .font(.system(size: 10, weight: .semibold))
+                        Text(difficultyLabel)
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color(hex: "#FF9500"))
-                            .cornerRadius(6)
-                        
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(badgeColor)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
                         Spacer()
                     }
-                    .padding(12)
-                    
+                    .padding(14)
+
                     Spacer()
-                    
-                    // Title and Play Button
-                    HStack {
+
+                    HStack(alignment: .bottom) {
                         Text(exercise.name)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
+
+                        Spacer(minLength: 8)
+
+                        if exercise.hasPlayableMedia {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(.white)
+                        }
                     }
-                    .padding(12)
+                    .padding(14)
                 }
             }
-            .frame(width: 240, height: 140)
+            .frame(width: 260, height: 150)
             .clipped()
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(
+                color: AppConstants.TrakkitHome.cardShadowColor,
+                radius: AppConstants.TrakkitHome.cardShadowRadius,
+                x: 0,
+                y: AppConstants.TrakkitHome.cardShadowY
+            )
         }
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel(exercise.name)
-        .accessibilityHint("Opens exercise details")
+        .accessibilityHint(exercise.hasPlayableMedia ? "Play exercise video" : "Opens exercise details")
     }
 }
 
@@ -133,6 +150,6 @@ struct HowToExerciseCard: View {
         exercises: [],
         onExerciseTap: { _ in }
     )
-    .background(Color(hex: "#F5F5F7"))
+    .background(AppConstants.TrakkitHome.background)
     .previewLayout(.sizeThatFits)
 }

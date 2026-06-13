@@ -4,7 +4,6 @@ import GoogleSignIn
 
 enum AppState {
     case splash
-    case onboarding
     case main
 }
 
@@ -33,35 +32,21 @@ struct FitnessAppApp: App {
                         get: { appState == .splash },
                         set: { isActive in
                             if !isActive {
-                                // Check if onboarding has been completed
-                                let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-                                withAnimation {
-                                    appState = hasCompletedOnboarding ? .main : .onboarding
-                                }
-                            }
-                        }
-                    ))
-                    .transition(.opacity)
-                    .zIndex(1)
-                    
-                case .onboarding:
-                    NewOnboardingView(isPresented: Binding(
-                        get: { appState == .onboarding },
-                        set: { isPresented in
-                            if !isPresented {
+                                // Profile onboarding is gated inside ContentView after authentication + Firestore user.
                                 withAnimation {
                                     appState = .main
                                 }
                             }
                         }
                     ))
-                    .environmentObject(authViewModel)
                     .transition(.opacity)
                     .zIndex(1)
                     
                 case .main:
                     ContentView()
                         .environmentObject(authViewModel)
+                        .environmentObject(CategoryConfigStore.shared)
+                        .task { await CategoryConfigStore.shared.reload() }
                         .transition(.opacity)
                 }
             }
@@ -73,4 +58,3 @@ struct FitnessAppApp: App {
         }
     }
 }
-

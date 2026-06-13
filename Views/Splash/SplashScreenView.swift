@@ -7,7 +7,6 @@ struct SplashScreenView: View {
     @State private var opacity = 0.5
     @State private var animationCompleted = false
     @State private var startTime: Date?
-    @State private var showFallback = false
     private let minimumDisplayTime: TimeInterval = 3.0 // Minimum 3 seconds
     
     var body: some View {
@@ -24,43 +23,11 @@ struct SplashScreenView: View {
             )
             .ignoresSafeArea()
             
-            VStack(spacing: 30) {
-                // Show either Lottie Animation OR Fallback, not both
-                Group {
-                    if showFallback {
-                        // Fallback animated icon if Lottie file not found
-                        Image(systemName: "figure.run")
-                            .font(.system(size: 80))
-                            .foregroundColor(AppConstants.Colors.primary)
-                            .symbolEffect(.pulse, options: .repeating)
-                    } else {
-                        // Lottie Animation (looping)
-                        LottieView(
-                            name: "fitness-splash",
-                            loopMode: .loop,
-                            animationSpeed: 1.0,
-                            onAnimationComplete: {
-                                // This won't be called in loop mode, but kept for compatibility
-                                handleAnimationComplete()
-                            },
-                            onAnimationNotFound: {
-                                // Animation file not found, show fallback
-                                showFallback = true
-                            }
-                        )
-                        .frame(width: 200, height: 200)
-                    }
-                }
-                .scaleEffect(size)
-                .opacity(opacity)
-                
-                // App Name
-                Text("Fitness App")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(AppConstants.Colors.textPrimary(colorScheme: colorScheme))
+            VStack(spacing: 20) {
+                AppLogoView(style: .wordmark, maxWidth: 260)
+                    .scaleEffect(size)
                     .opacity(opacity)
                 
-                // Tagline (optional)
                 Text("Transform Your Body")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppConstants.Colors.textSecondary(colorScheme: colorScheme))

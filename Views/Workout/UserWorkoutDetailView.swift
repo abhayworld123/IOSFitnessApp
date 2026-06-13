@@ -33,7 +33,11 @@ struct UserWorkoutDetailView: View {
             if isLoading {
                 loadingView
             } else if let errorMessage = errorMessage {
-                errorView(message: errorMessage)
+                LoadFailureFallbackView(
+                    message: errorMessage,
+                    onRetry: { Task { await loadExercises() } },
+                    onGoBack: { dismiss() }
+                )
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -208,6 +212,7 @@ struct UserWorkoutDetailView: View {
                         HowToVideoThumbnail(
                             exercise: exercise,
                             onTap: {
+                                guard exercise.hasPlayableMedia else { return }
                                 selectedVideoExercise = exercise
                             }
                         )
@@ -256,33 +261,6 @@ struct UserWorkoutDetailView: View {
             Text("Loading exercises...")
                 .font(.system(size: 16))
                 .foregroundColor(Color(hex: "#8E8E93"))
-        }
-    }
-    
-    // MARK: - Error View
-    
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 24) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 50))
-                .foregroundColor(Color(hex: "#8E8E93").opacity(0.5))
-            
-            Text("Failed to Load Exercises")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(Color(hex: "#1C1C1E"))
-            
-            Text(message)
-                .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#8E8E93"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Button("Retry") {
-                Task {
-                    await loadExercises()
-                }
-            }
-            .buttonStyle(.borderedProminent)
         }
     }
     
@@ -416,18 +394,20 @@ private struct HowToVideoThumbnail: View {
     var body: some View {
         Button(action: onTap) {
             ZStack(alignment: .topLeading) {
-                // Video thumbnail placeholder
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color(hex: "#FF9500").opacity(0.6),
-                                Color(hex: "#FF9500").opacity(0.3)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                if let s = exercise.thumbnailURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !s.isEmpty,
+                   let url = URL(string: s) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        default:
+                            placeholderBackground
+                        }
+                    }
+                } else {
+                    placeholderBackground
+                }
                 
                 // Gradient Overlay
                 LinearGradient(
@@ -467,9 +447,11 @@ private struct HowToVideoThumbnail: View {
                         
                         Spacer()
                         
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
+                        if exercise.hasPlayableMedia {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(.white)
+                        }
                     }
                     .padding(12)
                 }
@@ -478,6 +460,21 @@ private struct HowToVideoThumbnail: View {
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(!exercise.hasPlayableMedia)
+    }
+
+    private var placeholderBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "#FF9500").opacity(0.6),
+                        Color(hex: "#FF9500").opacity(0.3)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
     }
     
     private var difficultyTag: String {

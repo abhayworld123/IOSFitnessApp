@@ -3,7 +3,9 @@ import UIKit
 
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @AppStorage("hasCompletedNewOnboarding") private var hasCompletedNewOnboarding = false
+    @EnvironmentObject var categoryStore: CategoryConfigStore
+    /// Sticky overlay — stays up until the user finishes or skips through every onboarding step.
+    @State private var showProfileOnboarding = false
     
     var body: some View {
         Group {
@@ -11,18 +13,29 @@ struct ContentView: View {
                 ZStack {
                     MainTabView()
                         .environmentObject(authViewModel)
-                    if !hasCompletedNewOnboarding {
-                        NewOnboardingView(isPresented: Binding(
-                            get: { !hasCompletedNewOnboarding },
-                            set: { stillShowing in
-                                if !stillShowing {
-                                    hasCompletedNewOnboarding = true
-                                }
-                            }
-                        ))
+                        .environmentObject(categoryStore)
+                    if showProfileOnboarding {
+                        NewOnboardingView(isPresented: $showProfileOnboarding)
                         .environmentObject(authViewModel)
                         .transition(.opacity)
                         .zIndex(1000)
+                    }
+                }
+                .onAppear {
+                    if authViewModel.needsProfileOnboarding {
+                        showProfileOnboarding = true
+                    }
+                }
+                .onChange(of: authViewModel.needsProfileOnboarding) { _, needs in
+                    if needs {
+                        showProfileOnboarding = true
+                    }
+                }
+                .onChange(of: authViewModel.isAuthenticated) { _, authenticated in
+                    if !authenticated {
+                        showProfileOnboarding = false
+                    } else if authViewModel.needsProfileOnboarding {
+                        showProfileOnboarding = true
                     }
                 }
             } else {
@@ -51,8 +64,10 @@ struct MainTabView: View {
                             .environmentObject(authViewModel)
                     }
                 case 1:
-                    CalendarView(userId: authViewModel.currentUser?.id)
-                        .environmentObject(authViewModel)
+                    NavigationView {
+                        WorkoutHomeView()
+                            .environmentObject(authViewModel)
+                    }
                 case 2:
                     VideoLibraryView()
                         .environmentObject(authViewModel)
@@ -77,7 +92,6 @@ struct MainTabView: View {
             }
         }
         .onAppear {
-            // Hide default tab bar
             UITabBar.appearance().isHidden = true
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToCalendar"))) { _ in
@@ -116,5 +130,6 @@ extension UIColor {
 
 #Preview {
     ContentView()
+        .environmentObject(AuthViewModel())
+        .environmentObject(CategoryConfigStore.shared)
 }
-

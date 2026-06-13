@@ -115,7 +115,7 @@ struct MealPreferencesView: View {
                         HapticFeedback.impact()
                         onNext()
                     }) {
-                        Text("Save & Next")
+                        Text(currentPage == totalPages - 1 ? "Finish" : "Save & Next")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)

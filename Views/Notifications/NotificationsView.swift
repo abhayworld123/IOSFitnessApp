@@ -1,10 +1,14 @@
 import SwiftUI
 
 struct NotificationsView: View {
-    @StateObject private var viewModel = NotificationViewModel()
+    @ObservedObject var viewModel: NotificationViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
-    
+
+    init(viewModel: NotificationViewModel) {
+        self.viewModel = viewModel
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -13,6 +17,12 @@ struct NotificationsView: View {
                 
                 if viewModel.isLoading && viewModel.notifications.isEmpty {
                     loadingView
+                } else if let loadErr = viewModel.listLoadError, viewModel.notifications.isEmpty {
+                    LoadFailureFallbackView(
+                        message: loadErr,
+                        onRetry: { Task { await viewModel.fetchNotifications() } },
+                        onGoBack: { dismiss() }
+                    )
                 } else if viewModel.notifications.isEmpty {
                     emptyStateView
                 } else {
@@ -69,6 +79,7 @@ struct NotificationsView: View {
                                 ) {
                                     Task {
                                         await viewModel.markAsRead(notification)
+                                        NotificationDeepLink.post(actionURL: notification.actionURL)
                                     }
                                 } onDelete: {
                                     Task {
@@ -223,6 +234,6 @@ struct NotificationRowView: View {
 }
 
 #Preview {
-    NotificationsView()
+    NotificationsView(viewModel: NotificationViewModel())
 }
 

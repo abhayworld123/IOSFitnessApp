@@ -79,6 +79,8 @@ struct User: Identifiable, Codable {
     var interestedActivities: [String]?
     var heightUnitPreference: HeightUnit?
     var weightUnitPreference: WeightUnit?
+    /// Set when user finishes profile onboarding; legacy accounts may infer completion from filled profile fields.
+    var profileOnboardingCompleted: Bool?
     
     init(
         id: String,
@@ -98,7 +100,8 @@ struct User: Identifiable, Codable {
         physicalLimitations: [String]? = nil,
         interestedActivities: [String]? = nil,
         heightUnitPreference: HeightUnit? = nil,
-        weightUnitPreference: WeightUnit? = nil
+        weightUnitPreference: WeightUnit? = nil,
+        profileOnboardingCompleted: Bool? = nil
     ) {
         self.id = id
         self.email = email
@@ -118,6 +121,20 @@ struct User: Identifiable, Codable {
         self.interestedActivities = interestedActivities
         self.heightUnitPreference = heightUnitPreference
         self.weightUnitPreference = weightUnitPreference
+        self.profileOnboardingCompleted = profileOnboardingCompleted
+    }
+}
+
+extension User {
+    /// Whether profile onboarding is done. New users must finish the flow (`profileOnboardingCompleted == true`).
+    /// Legacy accounts (nil flag) infer completion from core vitals only so partial optional steps do not dismiss onboarding early.
+    var hasCompletedProfileOnboarding: Bool {
+        if profileOnboardingCompleted == true { return true }
+        if profileOnboardingCompleted == false { return false }
+        return gender != nil
+            && age != nil
+            && weight != nil
+            && height != nil
     }
 }
 

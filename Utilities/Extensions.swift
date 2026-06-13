@@ -50,6 +50,21 @@ extension String {
         let hasNumber = self.contains(where: { $0.isNumber })
         return self.count >= minLength && hasUppercase && hasNumber
     }
+
+    var passwordValidationError: String? {
+        let minLength = 8
+        guard self.count >= minLength else {
+            return "Password must be at least 8 characters"
+        }
+
+        let hasUppercase = self.contains(where: { $0.isUppercase })
+        let hasNumber = self.contains(where: { $0.isNumber })
+        guard hasUppercase && hasNumber else {
+            return "Password must include at least 1 uppercase letter and 1 number"
+        }
+
+        return nil
+    }
     
     var isValidName: Bool {
         return !self.trimmingCharacters(in: .whitespaces).isEmpty && self.count >= 2

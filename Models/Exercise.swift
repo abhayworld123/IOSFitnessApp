@@ -85,6 +85,14 @@ struct Exercise: Identifiable, Codable {
         return duration != nil
     }
     
+    /// True when `animationURL` points to a Lottie JSON or direct video (MP4, etc.).
+    var hasPlayableMedia: Bool {
+        guard let raw = animationURL?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return false
+        }
+        return URL(string: raw) != nil
+    }
+    
     var displayFormat: String {
         if let sets = sets, let reps = reps {
             return "\(sets) sets × \(reps) reps"

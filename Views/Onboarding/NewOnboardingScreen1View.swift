@@ -37,13 +37,9 @@ struct NewOnboardingScreen1View: View {
             
             // Content
             VStack(spacing: 0) {
-                // Top Logo Icon
+                // Top Logo
                 HStack {
-                    Image(systemName: page.logoIcon)
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 46, height: 46)
-                        .background(Color.white.opacity(0.15))
+                    AppLogoView(style: .mark, markSize: 46)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     
                     Spacer()

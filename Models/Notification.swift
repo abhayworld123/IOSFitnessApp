@@ -60,8 +60,10 @@ struct Notification: Identifiable, Codable {
     var message: String
     var timestamp: Date
     var isRead: Bool
-    var actionURL: String? // Optional deep link or navigation path
-    
+    var actionURL: String?
+    /// Dedup key for scenario-based inbox entries (e.g. missed_workout_2026-06-11).
+    var scenarioKey: String?
+
     init(
         id: String = UUID().uuidString,
         type: NotificationType,
@@ -69,7 +71,8 @@ struct Notification: Identifiable, Codable {
         message: String,
         timestamp: Date = Date(),
         isRead: Bool = false,
-        actionURL: String? = nil
+        actionURL: String? = nil,
+        scenarioKey: String? = nil
     ) {
         self.id = id
         self.type = type
@@ -78,6 +81,7 @@ struct Notification: Identifiable, Codable {
         self.timestamp = timestamp
         self.isRead = isRead
         self.actionURL = actionURL
+        self.scenarioKey = scenarioKey
     }
 }
 

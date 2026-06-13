@@ -11,7 +11,26 @@ class DashboardViewModel2: ObservableObject {
     @Published var exercises: [Exercise] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    /// Best consecutive-day streak ever (persisted).
+    @Published var streakPersonalBest: Int = 0
+    /// Previous calendar day weight from daily stats (for delta on home).
+    @Published var previousDayWeight: Double?
     
+    /// Home first-time empty state for users with no workouts and no logged tracker readings today.
+    var isFirstTimeHomeEmptyState: Bool {
+        userWorkouts.isEmpty && streakData.currentStreak == 0 && !hasLoggedAnyDailyTracker
+    }
+    
+    /// True only when the user has logged water / sleep / steps today (ignores goals and profile weight).
+    /// Goals-only rows from Firestore must not flip the empty-home layout; neither must onboarding weight on the user doc.
+    private var hasLoggedAnyDailyTracker: Bool {
+        dailyMetrics.water.current > 0
+            || dailyMetrics.sleep.current > 0
+            || dailyMetrics.steps.current > 0
+    }
+
+    private static let streakPersonalBestKey = "dashboardStreakPersonalBest"
+
     private let db = Firestore.firestore()
     private let workoutService = WorkoutService.shared
     private let waterService = WaterTrackingService.shared
@@ -43,9 +62,8 @@ class DashboardViewModel2: ObservableObject {
     ]
     
     init() {
-        // Initialize with mock data
-        self.streakData = DashboardViewModel2.generateMockStreakData()
-        self.dailyMetrics = DashboardViewModel2.generateMockDailyMetrics()
+        self.streakData = Self.streakData(forCompletionDates: [])
+        self.dailyMetrics = DashboardViewModel2.generateEmptyDailyMetrics()
     }
     
     // MARK: - Fetch Data
@@ -59,6 +77,8 @@ class DashboardViewModel2: ObservableObject {
         } else {
             streakData = DashboardViewModel2.generateMockStreakData()
             dailyMetrics = DashboardViewModel2.generateMockDailyMetrics()
+            refreshStreakPersonalBest(from: streakData.currentStreak)
+            previousDayWeight = nil
         }
         
         await fetchExercisesFromFirebase()
@@ -121,13 +141,83 @@ class DashboardViewModel2: ObservableObject {
             }
             streak = buildStreakData(completionDates: completionDates)
         }
-        
+
         dailyMetrics = metrics
         streakData = streak
+        persistStreakPersonalBest(current: streak.currentStreak)
+        await fetchPreviousDayWeight(userId: userId)
+    }
+
+    private func fetchPreviousDayWeight(userId: String) async {
+        let cal = Calendar.current
+        guard let yesterday = cal.date(byAdding: .day, value: -1, to: Date()) else {
+            previousDayWeight = nil
+            return
+        }
+        if let stats = try? await dailyStatsService.fetchDailyStats(userId: userId, date: yesterday),
+           let w = stats.weight, w > 0 {
+            previousDayWeight = w
+        } else {
+            previousDayWeight = nil
+        }
+    }
+
+    private func persistStreakPersonalBest(current: Int) {
+        var best = UserDefaults.standard.integer(forKey: Self.streakPersonalBestKey)
+        if current > best {
+            best = current
+            UserDefaults.standard.set(best, forKey: Self.streakPersonalBestKey)
+        }
+        streakPersonalBest = max(best, current)
+    }
+
+    private func refreshStreakPersonalBest(from current: Int) {
+        let stored = UserDefaults.standard.integer(forKey: Self.streakPersonalBestKey)
+        streakPersonalBest = max(stored, current)
+    }
+
+    static func intensityLabel(_ difficulty: DifficultyLevel) -> String {
+        switch difficulty {
+        case .advanced, .intermediate:
+            return "High"
+        case .beginner:
+            return "Low"
+        case .allLevels:
+            return "Moderate"
+        }
+    }
+
+    static func trainingTargetLabel(goal: FitnessGoal?) -> String {
+        switch goal {
+        case .muscleGain, .both:
+            return "Hypertrophy"
+        case .weightLoss:
+            return "Fat loss"
+        case .endurance:
+            return "Endurance"
+        case .flexibility:
+            return "Mobility"
+        case .none:
+            return "General fitness"
+        }
+    }
+
+    func upcomingSession(for user: User?) -> UpcomingSessionDisplay? {
+        guard let workout = userWorkouts.first else { return nil }
+        return UpcomingSessionDisplay(
+            title: workout.title,
+            durationMinutes: workout.duration,
+            intensity: Self.intensityLabel(workout.difficulty),
+            target: Self.trainingTargetLabel(goal: user?.fitnessGoal)
+        )
     }
     
     /// Builds StreakData from workout completion dates (same logic as ProfileViewModel).
     private func buildStreakData(completionDates: [Date]) -> StreakData {
+        Self.streakData(forCompletionDates: completionDates)
+    }
+    
+    private static func streakData(forCompletionDates completionDates: [Date]) -> StreakData {
         let calendar = Calendar.current
         let today = Date()
         let dayNames = ["M", "T", "W", "T", "F", "S", "S"]
@@ -142,11 +232,11 @@ class DashboardViewModel2: ObservableObject {
             activities.append(DayActivity(dayName: dayName, date: date, isCompleted: isCompleted))
         }
         
-        let currentStreak = calculateStreak(from: completionDates)
+        let currentStreak = computeStreak(from: completionDates)
         return StreakData(weeklyActivities: activities, currentStreak: currentStreak)
     }
     
-    private func calculateStreak(from dates: [Date]) -> Int {
+    private static func computeStreak(from dates: [Date]) -> Int {
         guard !dates.isEmpty else { return 0 }
         let calendar = Calendar.current
         let sortedDates = dates.sorted(by: >)
@@ -183,9 +273,11 @@ class DashboardViewModel2: ObservableObject {
         
         do {
             userWorkouts = try await workoutService.fetchUserWorkouts(userId: userId)
+            errorMessage = nil
         } catch {
             print("Error fetching user workouts: \(error.localizedDescription)")
             userWorkouts = []
+            errorMessage = "Failed to load your workouts. Please try again."
         }
     }
     
@@ -221,7 +313,7 @@ class DashboardViewModel2: ObservableObject {
                         try await docRef.delete()
                     }
                     
-                    let newStreak = self.calculateStreak(from: self.streakData.weeklyActivities.filter { $0.isCompleted }.map { $0.date })
+                    let newStreak = Self.computeStreak(from: self.streakData.weeklyActivities.filter { $0.isCompleted }.map { $0.date })
                     await MainActor.run {
                         self.streakData.currentStreak = newStreak
                     }

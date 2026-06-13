@@ -98,7 +98,8 @@ class AuthService: ObservableObject {
                 id: authResult.user.uid,
                 email: email,
                 name: name,
-                subscriptionStatus: .free
+                subscriptionStatus: .free,
+                profileOnboardingCompleted: false
             )
             
             try await saveUserData(newUser)
@@ -160,7 +161,8 @@ class AuthService: ObservableObject {
             id: userId,
             email: email.isEmpty ? "\(userId)@auth.local" : email,
             name: name,
-            subscriptionStatus: .free
+            subscriptionStatus: .free,
+            profileOnboardingCompleted: false
         )
         try await saveUserData(newUser)
         currentUser = newUser
@@ -188,12 +190,20 @@ class AuthService: ObservableObject {
     }
 
     // MARK: - Onboarding profile (merge into Firestore while user completes steps)
-    func mergeOnboardingDetails(_ details: BasicDetailsData) async throws {
+    func mergeOnboardingDetails(
+        _ details: BasicDetailsData,
+        markProfileOnboardingComplete: Bool = false,
+        clearedFields: Set<OnboardingClearedField> = []
+    ) async throws {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
         var data: [String: Any] = [
             FirestoreFields.updatedAt: Timestamp(date: Date())
         ]
+        
+        if markProfileOnboardingComplete {
+            data[FirestoreFields.profileOnboardingCompleted] = true
+        }
 
         if let gender = details.gender {
             data[FirestoreFields.gender] = gender.rawValue
@@ -201,26 +211,36 @@ class AuthService: ObservableObject {
         if let age = details.age {
             data[FirestoreFields.age] = age
         }
+        // `details.weight` is always stored in kg (converted in BasicVitalsOnboardingView).
         if let w = details.weight {
-            let kg = details.weightUnit == .kg ? w : details.weightUnit.convert(w, to: .kg)
-            data[FirestoreFields.weight] = kg
+            data[FirestoreFields.weight] = w
         }
         if let heightCm = details.height {
             data[FirestoreFields.height] = heightCm
         }
-        if let goal = details.fitnessGoal {
+        if clearedFields.contains(.fitnessGoal) {
+            data[FirestoreFields.fitnessGoal] = FieldValue.delete()
+        } else if let goal = details.fitnessGoal {
             data[FirestoreFields.fitnessGoal] = goal.rawValue
         }
-        if let level = details.activityLevel {
+        if clearedFields.contains(.activityLevel) {
+            data[FirestoreFields.activityLevel] = FieldValue.delete()
+        } else if let level = details.activityLevel {
             data[FirestoreFields.activityLevel] = level.rawValue
         }
-        if !details.physicalLimitations.isEmpty {
+        if clearedFields.contains(.physicalLimitations) {
+            data[FirestoreFields.physicalLimitations] = []
+        } else if !details.physicalLimitations.isEmpty {
             data[FirestoreFields.physicalLimitations] = details.physicalLimitations
         }
-        if !details.interestedActivities.isEmpty {
+        if clearedFields.contains(.interestedActivities) {
+            data[FirestoreFields.interestedActivities] = []
+        } else if !details.interestedActivities.isEmpty {
             data[FirestoreFields.interestedActivities] = details.interestedActivities
         }
-        if let meal = details.mealPreference {
+        if clearedFields.contains(.mealPreference) {
+            data[FirestoreFields.mealPreference] = FieldValue.delete()
+        } else if let meal = details.mealPreference {
             data[FirestoreFields.mealPreference] = meal.rawValue
         }
         data[FirestoreFields.heightUnitPreference] = details.heightUnit.rawValue

@@ -19,6 +19,7 @@ export const config = {
     .filter(Boolean),
   firebaseServiceAccountPath: req('FIREBASE_SERVICE_ACCOUNT_PATH'),
   exercisesCollection: req('FIRESTORE_EXERCISES_COLLECTION', 'exercises'),
+  categoriesCollection: req('FIRESTORE_CATEGORIES_COLLECTION', 'categories'),
   r2: {
     accountId: req('R2_ACCOUNT_ID'),
     accessKeyId: req('R2_ACCESS_KEY_ID'),
@@ -28,6 +29,16 @@ export const config = {
   },
   adminApiKey: req('ADMIN_API_KEY').trim(),
   publicApiKey: req('PUBLIC_API_KEY').trim(),
+  /** OpenRouter (server-only): https://openrouter.ai */
+  openRouterApiKey: req('OPENROUTER_API_KEY').trim(),
+  openRouterModel: req('OPENROUTER_MODEL', 'openai/gpt-4o-mini'),
+  /** Cloudflare Workers AI REST (server-only): https://developers.cloudflare.com/workers-ai/get-started/rest-api/ */
+  cloudflareAccountId: req('CLOUDFLARE_ACCOUNT_ID').trim(),
+  cloudflareAiApiToken: req('CLOUDFLARE_AI_API_TOKEN').trim(),
+  cloudflareAiModel: req('CLOUDFLARE_AI_MODEL', '@cf/meta/llama-3.2-3b-instruct'),
+  aiProviderDefault: req('AI_PROVIDER_DEFAULT', 'cloudflare').trim().toLowerCase(),
+  aiCoachFirestoreCollection: req('FIRESTORE_AI_COACH_COLLECTION', 'trakkit_admin_settings'),
+  aiCoachFirestoreDocId: req('FIRESTORE_AI_COACH_DOC', 'ai_coach'),
 };
 
 export function assertR2() {

@@ -9,7 +9,10 @@ final class WeightTrackingViewModel: ObservableObject {
     @Published var rulerValue: Double = 70
     @Published var goalWeightKg: Double?
     @Published var history: [(date: Date, weightKg: Double)] = []
+    /// Set when the user stops sliding the empty-state ruler; drives the big readout.
+    @Published private(set) var emptySelectedWeight: Double?
     @Published var isLoading = false
+    @Published var errorMessage: String?
 
     private let db = Firestore.firestore()
     private let dailyStatsService = DailyStatsService.shared
@@ -23,6 +26,25 @@ final class WeightTrackingViewModel: ObservableObject {
         displayUnit.convert(rulerValue, to: .kg)
     }
 
+    /// No weight logs in daily stats yet — show onboarding-style empty screen.
+    var isEmptyTrackingState: Bool {
+        history.isEmpty
+    }
+
+    /// Big number on empty card — `00.00` until the ruler slide settles, then the picked weight.
+    var emptyDisplayWeightText: String {
+        guard let w = emptySelectedWeight else { return "00.00" }
+        return String(format: "%.2f", w)
+    }
+
+    func commitEmptyRulerSelection() {
+        emptySelectedWeight = rulerValue
+    }
+
+    static func emptyDefaultRulerValue(for unit: WeightUnit) -> Double {
+        unit == .kg ? 75.0 : 165.0
+    }
+
     /// ±2.5 kg band around goal for the “ideal weight” fill (kg).
     var idealBandKg: (low: Double, high: Double)? {
         guard let g = goalWeightKg else { return nil }
@@ -31,6 +53,7 @@ final class WeightTrackingViewModel: ObservableObject {
 
     func load() async {
         isLoading = true
+        errorMessage = nil
         defer { isLoading = false }
 
         do {
@@ -43,15 +66,24 @@ final class WeightTrackingViewModel: ObservableObject {
                 goalWeightKg = nil
             }
 
-            if let wKg = data[FirestoreFields.weight] as? Double, wKg > 0 {
-                rulerValue = WeightUnit.kg.convert(wKg, to: displayUnit)
-            } else {
-                rulerValue = displayUnit.defaultValue
+            if let prefRaw = data[FirestoreFields.weightUnitPreference] as? String,
+               let pref = WeightUnit(rawValue: prefRaw) {
+                displayUnit = pref
             }
 
-            try await refreshHistory()
+            try? await refreshHistory()
+
+            if let last = history.last {
+                rulerValue = WeightUnit.kg.convert(last.weightKg, to: displayUnit)
+            } else if let wKg = data[FirestoreFields.weight] as? Double, wKg > 0 {
+                emptySelectedWeight = nil
+                rulerValue = WeightUnit.kg.convert(wKg, to: displayUnit)
+            } else {
+                emptySelectedWeight = nil
+                rulerValue = Self.emptyDefaultRulerValue(for: displayUnit)
+            }
         } catch {
-            print("WeightTracking load error: \(error.localizedDescription)")
+            errorMessage = "Failed to load weight data. Please try again."
             rulerValue = displayUnit.defaultValue
         }
     }
@@ -62,6 +94,7 @@ final class WeightTrackingViewModel: ObservableObject {
     }
 
     func schedulePersistWeight() {
+        guard !isEmptyTrackingState else { return }
         saveTask?.cancel()
         let kg = weightKg
         saveTask = Task {
@@ -69,6 +102,12 @@ final class WeightTrackingViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             await persistWeightKg(kg)
         }
+    }
+
+    /// Saves the current ruler value immediately (for “Add First log” / “Add New log”).
+    func addLogNow() async {
+        saveTask?.cancel()
+        await persistWeightKg(weightKg)
     }
 
     func persistWeightKg(_ kg: Double) async {
@@ -106,5 +145,68 @@ final class WeightTrackingViewModel: ObservableObject {
             max(WeightUnit.kg.convert(kg, to: newUnit), newUnit.range.lowerBound),
             newUnit.range.upperBound
         )
+        if let selected = emptySelectedWeight {
+            let selectedKg = old.convert(selected, to: .kg)
+            emptySelectedWeight = WeightUnit.kg.convert(selectedKg, to: newUnit)
+        }
     }
+
+    // MARK: - Progress (last 6 months)
+
+    /// Change in kg from the start to the end of the 6‑month window (negative = loss).
+    var trendDeltaKg: Double {
+        let bars = sixMonthBarsInternal()
+        guard let first = bars.first?.weightKg, let last = bars.last?.weightKg else { return 0 }
+        return last - first
+    }
+
+    /// One value per month for the last 6 calendar months (carried forward when no log).
+    func sixMonthBars() -> [WeightMonthBar] {
+        sixMonthBarsInternal()
+    }
+
+    /// “Ideal” reference line in the mock (slightly above goal).
+    var idealWeightKg: Double? {
+        guard let g = goalWeightKg else { return nil }
+        return g + 2.0
+    }
+
+    private func sixMonthBarsInternal() -> [WeightMonthBar] {
+        let cal = Calendar.current
+        guard let thisMonthStart = cal.date(from: cal.dateComponents([.year, .month], from: Date())) else {
+            return []
+        }
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        /// `MMM` avoids ambiguous two-letter collisions (e.g. March vs May both “MA” with `LLL`).
+        df.dateFormat = "MMM"
+        var months: [Date] = []
+        for i in 0..<6 {
+            guard let m = cal.date(byAdding: .month, value: -5 + i, to: thisMonthStart) else { continue }
+            months.append(m)
+        }
+        guard let firstMonth = months.first else { return [] }
+        let beforeFirst = history.filter { $0.date < firstMonth }.sorted { $0.date < $1.date }
+        var lastCarried = beforeFirst.last?.weightKg ?? max(0, weightKg)
+        var out: [WeightMonthBar] = []
+        for m in months {
+            let end = cal.date(byAdding: .month, value: 1, to: m) ?? m
+            let inMonth = history.filter { $0.date >= m && $0.date < end }.sorted { $0.date < $1.date }
+            let w = inMonth.last?.weightKg ?? lastCarried
+            lastCarried = w
+            let label = df.string(from: m).uppercased()
+            let id = ISO8601DateFormatter().string(from: m)
+            out.append(WeightMonthBar(id: id, monthStart: m, label: label, weightKg: w))
+        }
+        return out
+    }
+}
+
+// MARK: - Month bar (chart)
+
+struct WeightMonthBar: Identifiable {
+    let id: String
+    let monthStart: Date
+    let label: String
+    let weightKg: Double
 }

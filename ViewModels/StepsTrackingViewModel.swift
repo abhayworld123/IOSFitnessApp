@@ -24,16 +24,23 @@ class StepsTrackingViewModel: ObservableObject {
     @Published var hourlySteps: [Int]
     @Published var reminderEnabled: Bool = false
     @Published var isLoading: Bool = false
-    /// True when user has no steps goal set — show goal setup popup.
     @Published var needsGoalSetup: Bool = false
+    @Published var deviceConnectMessage: String?
 
     /// Apple Health connection state for step data.
     @Published var healthStatus: StepsHealthStatus = .unknown
-    /// True while requesting Health authorization or fetching steps from Health.
     @Published var isHealthLoading: Bool = false
+
+    static let defaultStepsGoal = 10_000
 
     private let userId: String
     private let healthKit = StepsHealthKitService.shared
+    @Published private(set) var hasStepsHistory = false
+
+    /// New user: no logged steps and Health not connected yet.
+    var isEmptyTrackingState: Bool {
+        healthStatus != .authorized && steps == 0 && !hasStepsHistory
+    }
 
     /// Distance in km (derived from steps: ~0.00043 km per step to match 6000 → 2.6 km)
     var distanceKm: Double {
@@ -54,8 +61,8 @@ class StepsTrackingViewModel: ObservableObject {
     init(userId: String, stepsMetric: StepsMetric) {
         self.userId = userId
         self.steps = stepsMetric.current
-        self.stepsGoal = stepsMetric.goal
-        self.lastSyncedDate = Date()
+        self.stepsGoal = stepsMetric.goal > 0 ? stepsMetric.goal : Self.defaultStepsGoal
+        self.lastSyncedDate = nil
         self.hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: stepsMetric.current)
         if !healthKit.isHealthDataAvailable {
             healthStatus = .notAvailable
@@ -65,26 +72,53 @@ class StepsTrackingViewModel: ObservableObject {
     func loadData() async {
         isLoading = true
         needsGoalSetup = false
+        defer { isLoading = false }
+
         if let todayStats = try? await DailyStatsService.shared.fetchDailyStats(userId: userId, date: Date()) {
             steps = todayStats.steps
-            stepsGoal = todayStats.stepsGoal
+            stepsGoal = todayStats.stepsGoal > 0 ? todayStats.stepsGoal : Self.defaultStepsGoal
             hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: steps)
-            if stepsGoal <= 0 {
-                needsGoalSetup = true
+        } else {
+            steps = 0
+            stepsGoal = Self.defaultStepsGoal
+            hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: 0)
+        }
+
+        hasStepsHistory = await checkStepsHistory()
+
+        if healthKit.isHealthDataAvailable {
+            // If already authorized from a prior session, try a silent refresh.
+            if healthStatus == .authorized {
+                await loadTodayStepsFromHealth()
             }
         } else {
-            needsGoalSetup = true
+            healthStatus = .notAvailable
         }
-        try? await Task.sleep(nanoseconds: 200_000_000)
-        isLoading = false
+    }
+
+    private func checkStepsHistory() async -> Bool {
+        let cal = Calendar.current
+        for dayBack in 0..<30 {
+            let d = cal.date(byAdding: .day, value: -dayBack, to: Date()) ?? Date()
+            if let stats = try? await DailyStatsService.shared.fetchDailyStats(userId: userId, date: d),
+               stats.steps > 0 {
+                return true
+            }
+        }
+        return false
     }
 
     // MARK: - Apple Health
+
+    func connectDevice() async {
+        await requestHealthAuthorizationAndLoadSteps()
+    }
 
     /// Request read access to step data and fetch today's steps if granted.
     func requestHealthAuthorizationAndLoadSteps() async {
         guard healthKit.isHealthDataAvailable else {
             healthStatus = .notAvailable
+            deviceConnectMessage = "Apple Health isn't available on this device."
             return
         }
         isHealthLoading = true
@@ -98,21 +132,30 @@ class StepsTrackingViewModel: ObservableObject {
             steps = count
             hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: count)
             lastSyncedDate = Date()
-            try? await DailyStatsService.shared.saveTodayStats(userId: userId, steps: count, stepsGoal: stepsGoal)
-            if stepsGoal <= 0 {
-                needsGoalSetup = true
+            if count > 0 { hasStepsHistory = true }
+            let goal = stepsGoal > 0 ? stepsGoal : Self.defaultStepsGoal
+            stepsGoal = goal
+            try? await DailyStatsService.shared.saveTodayStats(userId: userId, steps: count, stepsGoal: goal)
+            if count == 0 {
+                deviceConnectMessage = "Apple Health is connected. No steps recorded yet today — log manually or check back later."
+            } else {
+                HapticFeedback.success()
             }
         } catch let error as StepsHealthKitError {
             switch error {
             case .healthKitNotAvailable:
                 healthStatus = .notAvailable
+                deviceConnectMessage = error.localizedDescription
             case .authorizationDenied:
                 healthStatus = .denied
+                deviceConnectMessage = "Health access was denied. Enable it in Settings or log steps manually."
             case .noData, .queryFailed:
                 healthStatus = .error(error.localizedDescription)
+                deviceConnectMessage = error.localizedDescription
             }
         } catch {
             healthStatus = .error(error.localizedDescription)
+            deviceConnectMessage = error.localizedDescription
         }
     }
 
@@ -126,9 +169,28 @@ class StepsTrackingViewModel: ObservableObject {
             steps = count
             hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: count)
             lastSyncedDate = Date()
+            if count > 0 { hasStepsHistory = true }
             try? await DailyStatsService.shared.saveTodayStats(userId: userId, steps: count, stepsGoal: stepsGoal)
         } catch {
             healthStatus = .error(error.localizedDescription)
+        }
+    }
+
+    func logManualSteps(_ count: Int) async {
+        let logged = max(0, count)
+        steps = logged
+        if stepsGoal <= 0 { stepsGoal = Self.defaultStepsGoal }
+        hourlySteps = StepsTrackingViewModel.mockHourlySteps(total: logged)
+        if logged > 0 { hasStepsHistory = true }
+        do {
+            try await DailyStatsService.shared.saveTodayStats(
+                userId: userId,
+                steps: logged,
+                stepsGoal: stepsGoal
+            )
+            HapticFeedback.success()
+        } catch {
+            deviceConnectMessage = "Couldn't save steps: \(error.localizedDescription)"
         }
     }
 
@@ -146,6 +208,7 @@ class StepsTrackingViewModel: ObservableObject {
 
     func toggleReminder() {
         reminderEnabled.toggle()
+        HapticFeedback.impact(style: .light)
     }
 
     /// Mock hourly distribution for "Today" chart (4 buckets: 12 AM, 6, 12 PM, 6 PM)

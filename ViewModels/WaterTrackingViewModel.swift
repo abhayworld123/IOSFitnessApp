@@ -15,6 +15,10 @@ class WaterTrackingViewModel: ObservableObject {
     /// True when user has no water record yet — show goal setup popup.
     @Published var needsGoalSetup: Bool = false
     
+    /// Default goal shown in empty state before the user saves a goal.
+    static let defaultGoalGlasses = 12
+    static let defaultGlassSizeMl = 250
+    
     private let waterService = WaterTrackingService.shared
     private let userId: String
     
@@ -34,7 +38,6 @@ class WaterTrackingViewModel: ObservableObject {
         needsGoalSetup = false
         
         do {
-            // Load today's intake — don't create a default record for new users
             let todayIntake = try await waterService.fetchTodayIntake(userId: userId, date: selectedDate)
             if let intake = todayIntake {
                 currentIntake = intake
@@ -45,22 +48,28 @@ class WaterTrackingViewModel: ObservableObject {
                 goal = 0
                 needsGoalSetup = true
             }
-            
-            // Load weekly data
-            let calendar = Calendar.current
-            let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
-            let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)!
-            
-            weeklyData = try await waterService.fetchWeeklyData(
-                userId: userId,
-                startDate: startOfWeek,
-                endDate: endOfWeek
-            )
-            
-            // Load reminder
-            reminder = try await waterService.fetchReminder(userId: userId)
         } catch {
             errorMessage = "Failed to load water intake data: \(error.localizedDescription)"
+            isLoading = false
+            return
+        }
+        
+        let calendar = Calendar.current
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)!
+        
+        if let week = try? await waterService.fetchWeeklyData(
+            userId: userId,
+            startDate: startOfWeek,
+            endDate: endOfWeek
+        ) {
+            weeklyData = week
+        } else {
+            weeklyData = []
+        }
+        
+        if let savedReminder = try? await waterService.fetchReminder(userId: userId) {
+            reminder = savedReminder
         }
         
         isLoading = false
@@ -212,6 +221,29 @@ class WaterTrackingViewModel: ObservableObject {
         let cal = Calendar.current
         let comps = cal.dateComponents([.hour, .minute], from: date)
         return cal.date(bySettingHour: comps.hour ?? 9, minute: comps.minute ?? 0, second: 0, of: Date()) ?? date
+    }
+    
+    // MARK: - Empty state
+    
+    /// New user or no logged glasses yet (no intake record, or zero today with no prior history).
+    var isEmptyTrackingState: Bool {
+        if needsGoalSetup { return true }
+        guard let intake = currentIntake else { return true }
+        let hasHistory = weeklyData.contains { $0.glassesConsumed > 0 }
+        return intake.glassesConsumed == 0 && !hasHistory
+    }
+    
+    /// Goal label for UI — uses saved goal or onboarding default before first save.
+    var displayGoal: Int {
+        goal > 0 ? goal : Self.defaultGoalGlasses
+    }
+    
+    func ensureDefaultGoalIfNeeded() {
+        guard goal <= 0 else { return }
+        updateGoal(Self.defaultGoalGlasses)
+        if glassSize < 100 {
+            glassSize = Self.defaultGlassSizeMl
+        }
     }
     
     // MARK: - Progress Message

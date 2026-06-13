@@ -11,6 +11,12 @@ class AuthViewModel: ObservableObject {
 
     private let authService = AuthService.shared
     
+    /// Show profile onboarding only for signed-in users who have not completed it (Firestore or legacy filled profile).
+    var needsProfileOnboarding: Bool {
+        guard isAuthenticated, let user = currentUser else { return false }
+        return !user.hasCompletedProfileOnboarding
+    }
+    
     init() {
         checkAuthenticationStatus()
     }
@@ -75,7 +81,7 @@ class AuthViewModel: ObservableObject {
         }
         
         guard password.isValidPassword else {
-            errorMessage = "Password must be at least 6 characters"
+            errorMessage = password.passwordValidationError ?? "Please enter a valid password"
             isLoading = false
             HapticFeedback.error()
             return
@@ -115,7 +121,7 @@ class AuthViewModel: ObservableObject {
         }
         
         guard password.isValidPassword else {
-            errorMessage = "Password must be at least 6 characters"
+            errorMessage = password.passwordValidationError ?? "Please enter a valid password"
             isLoading = false
             HapticFeedback.error()
             return
@@ -236,14 +242,37 @@ class AuthViewModel: ObservableObject {
     }
 
     // MARK: - Onboarding → Firestore
-    func persistOnboardingDetails(_ details: BasicDetailsData) async {
+    /// - Returns: `true` if merge succeeded (or skipped when unauthenticated without marking complete).
+    @discardableResult
+    func persistOnboardingDetails(
+        _ details: BasicDetailsData,
+        markProfileOnboardingComplete: Bool = false,
+        clearedFields: Set<OnboardingClearedField> = []
+    ) async -> Bool {
+        guard isAuthenticated else { return false }
+        do {
+            try await authService.mergeOnboardingDetails(
+                details,
+                markProfileOnboardingComplete: markProfileOnboardingComplete,
+                clearedFields: clearedFields
+            )
+            currentUser = authService.currentUser
+            return true
+        } catch {
+            print("Onboarding Firestore sync: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    /// Reload profile from Firestore (e.g. after onboarding or profile edits).
+    func refreshCurrentUser() async {
         guard isAuthenticated else { return }
         do {
-            try await authService.mergeOnboardingDetails(details)
-            currentUser = authService.currentUser
+            if let user = try await authService.fetchCurrentUserData() {
+                currentUser = user
+            }
         } catch {
-            // Avoid surfacing transient errors on every step; last successful merge still helps.
-            print("Onboarding Firestore sync: \(error.localizedDescription)")
+            print("Refresh user: \(error.localizedDescription)")
         }
     }
 }
